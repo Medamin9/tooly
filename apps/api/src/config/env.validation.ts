@@ -31,6 +31,14 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   PAYMENT_FULFILLMENT_MODE: string = 'offline_transfer';
+
+  @IsString()
+  @IsOptional()
+  JWT_SECRET: string = 'tooly_super_secret_jwt_key_min_32_chars_dev_only';
+
+  @IsString()
+  @IsOptional()
+  JWT_EXPIRES_IN: string = '7d';
 }
 
 export function validate(config: Record<string, unknown>) {

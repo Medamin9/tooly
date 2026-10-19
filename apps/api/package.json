@@ -17,7 +17,8 @@
     "test:cov": "jest --coverage",
     "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
     "prisma:migrate": "prisma migrate dev --schema=./prisma/schema.prisma",
-    "prisma:seed": "prisma db seed --schema=./prisma/schema.prisma"
+    "prisma:seed": "prisma db seed --schema=./prisma/schema.prisma",
+    "bootstrap:admin": "ts-node src/scripts/bootstrap-admin.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
@@ -26,12 +27,17 @@
     "@nestjs/common": "^11.0.11",
     "@nestjs/config": "^4.0.1",
     "@nestjs/core": "^11.0.11",
+    "@nestjs/jwt": "^12.0.3",
+    "@nestjs/passport": "^12.0.0",
     "@nestjs/platform-express": "^11.0.11",
     "@nestjs/swagger": "^11.0.6",
     "@prisma/client": "^6.4.1",
     "@tooly/contracts": "*",
+    "bcryptjs": "^3.0.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -40,9 +46,11 @@
     "@nestjs/schematics": "^11.0.2",
     "@nestjs/testing": "^11.0.11",
     "@tooly/config": "*",
+    "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.13.5",
+    "@types/passport-jwt": "^4.0.1",
     "jest": "^29.7.0",
     "prisma": "^6.4.1",
     "ts-jest": "^29.2.6",
@@ -60,6 +68,9 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(@nestjs/jwt|@nestjs/passport)/)"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
