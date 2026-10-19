@@ -162,13 +162,13 @@ export default async function ProductDetailPage({
             </div>
 
             <div className="space-y-3 pt-2 border-t border-line">
-              <a
-                href={`mailto:support@tooly.tn?subject=Order%20Request%20-%20${plan.name}&body=Hello%20Tooly,%20I%20would%20like%20to%20order%20${plan.name}%20(Ref:%20REF-${plan.slug.toUpperCase()}).`}
+              <Link
+                href={`/${typedLocale}/checkout?plan=${plan.slug}`}
                 className="w-full inline-flex items-center justify-center font-semibold rounded-control transition-all duration-200 bg-tooly-red text-surface hover:bg-tooly-red-dark text-sm px-4 py-3 gap-2 shadow"
               >
                 <Send className="w-4 h-4 rtl:rotate-180" />
-                <span>{dict.productDetail.contactToOrder}</span>
-              </a>
+                <span>{dict.common.requestPlan}</span>
+              </Link>
 
               <Link href={`/${typedLocale}/catalog`} className="block">
                 <Button variant="outline" size="sm" className="w-full">

@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Package,
   PlusCircle,
+  ShoppingBag,
   History,
   LogOut,
   ShieldAlert,
@@ -72,6 +73,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navLinks = [
     { href: '/admin', label: 'لوحة التحكم', icon: LayoutDashboard },
+    { href: '/admin/orders', label: 'إدارة الطلبات والتسليم', icon: ShoppingBag },
     { href: '/admin/products', label: 'إدارة المنتجات والأسعار', icon: Package },
     { href: '/admin/products/new', label: 'إضافة منتج جديد', icon: PlusCircle },
     { href: '/admin/audit', label: 'سجل التدقيق والأمان', icon: History },

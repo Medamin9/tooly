@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Menu, Search, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Menu, Search, ArrowRight, ShieldCheck, PackageCheck } from 'lucide-react';
 import { Locale } from '@tooly/contracts';
 import { dictionaries } from '@/lib/i18n/dictionaries';
 import { LocaleSwitcher } from './LocaleSwitcher';
@@ -80,6 +80,16 @@ export function Header({ locale }: { locale: Locale }) {
 
           {/* Right Header Actions */}
           <div className="flex items-center gap-3">
+            <Link
+              href={`/${locale}/order/lookup`}
+              className="text-xs font-semibold text-muted hover:text-ink transition-colors hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-control border border-line bg-paper"
+            >
+              <PackageCheck className="w-3.5 h-3.5 text-tooly-red" />
+              <span>
+                {locale === 'ar' ? 'تتبع طلبك' : locale === 'fr' ? 'Suivi commande' : 'Track order'}
+              </span>
+            </Link>
+
             <div className="hidden lg:block">
               <LocaleSwitcher currentLocale={locale} />
             </div>
@@ -150,6 +160,16 @@ export function Header({ locale }: { locale: Locale }) {
             >
               {dict.nav.faq}
             </a>
+            <Link
+              href={`/${locale}/order/lookup`}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="p-2 rounded-control hover:bg-paper text-tooly-red font-bold flex items-center gap-2 transition-colors"
+            >
+              <PackageCheck className="w-4 h-4 shrink-0" />
+              <span>
+                {locale === 'ar' ? 'تتبع طلبك' : locale === 'fr' ? 'Suivi commande' : 'Track order'}
+              </span>
+            </Link>
           </nav>
 
           <div className="pt-4 border-t border-line flex flex-col gap-3">
