@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-ink: #17191F;
+  --color-ink-light: #2E323E;
+  --color-paper: #FAF9F6;
+  --color-paper-dark: #F3F0EA;
+  --color-surface: #FFFFFF;
+  --color-muted: #6B6B70;
+  --color-line: #E8E5E0;
+  --color-tooly-red: #F52F3D;
+  --color-tooly-red-dark: #C91F2D;
+  --color-soft-red: #FFF0F1;
+  --color-success: #237A57;
+  --color-warning: #9A5A12;
+  --color-danger: #B42318;
+
+  --font-latin: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-arabic: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+}
+
+/* Light theme baseline */
+html {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-latin);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+/* Accessibility: Focus rings */
+:focus-visible {
+  outline: 2px solid var(--color-tooly-red);
+  outline-offset: 2px;
+}
+
+/* RTL layout support */
+[dir="rtl"] {
+  font-family: var(--font-arabic), var(--font-latin);
+  text-align: right;
+}
+
+[dir="ltr"] {
+  text-align: left;
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
