@@ -70,8 +70,10 @@ model Product {
   id             String          @id @default(uuid())
   slug           String          @unique
   categoryId     String
+  provider       String          // e.g. "Anthropic", "OpenAI", "Canva"
   deliveryMethod DeliveryMethod  @default(OFFLINE_TRANSFER)
-  isPublished    Boolean         @default(false)
+  isPublished    Boolean         @default(true)
+  isDemo         Boolean         @default(true) // Explicit demo indicator
   sortOrder      Int             @default(0)
   iconUrl        String?
   createdAt      DateTime        @default(now())
@@ -80,23 +82,28 @@ model Product {
   category       Category        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   variants       PlanVariant[]
 
+  @@index([categoryId, isPublished])
   @@map("products")
 }
 
 model PlanVariant {
-  id          String      @id @default(uuid())
-  productId   String
-  slug        String      @unique
-  duration    String      // e.g. "1_month", "3_months", "1_year"
-  price       Decimal     @db.Decimal(10, 3) // TND requires 3 decimal places (millimes)
-  currency    String      @default("TND")
-  isAvailable Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id           String      @id @default(uuid())
+  productId    String
+  slug         String      @unique
+  duration     String      // e.g. "1_month", "3_months", "1_year"
+  price        Decimal     @db.Decimal(10, 3) // TND requires 3 decimal places (millimes)
+  currency     String      @default("TND")
+  isAvailable  Boolean     @default(true)
+  isDemo       Boolean     @default(true)
+  features     Json?       // Feature list
+  restrictions Json?       // Terms and fair-use restrictions
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
-  product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  orderItems  OrderItem[]
+  product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems   OrderItem[]
 
+  @@index([productId, isAvailable])
   @@map("plan_variants")
 }
 
