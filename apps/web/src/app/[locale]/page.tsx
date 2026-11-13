@@ -1,29 +1,60 @@
 import React from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { notFound } from 'next/navigation';
-import {
-  Sparkles,
-  ArrowRight,
-  ShieldCheck,
-  Zap,
-  CheckCircle2,
-  Clock,
-  Layers,
-  Palette,
-  Video,
-  Cpu,
-  Workflow,
-  HelpCircle,
-} from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { Locale, SUPPORTED_LOCALES } from '@tooly/contracts';
 import { dictionaries } from '@/lib/i18n/dictionaries';
-import { DEMO_PLANS } from '@/lib/catalog/data';
+import { fetchCatalogProducts, fetchCategories } from '@/lib/api/catalog';
+import { mapApiProductToStorefrontPlan } from '@/lib/catalog/mappers';
+import { resolveCategoryImagePath } from '@/lib/media/category-image';
 import { HeroInteractiveScene } from '@/components/motion/HeroInteractiveScene';
-import { ScrollRevealSequence } from '@/components/motion/ScrollRevealSequence';
-import { PlanCard } from '@/components/catalog/PlanCard';
+import { PixelCard } from '@/components/motion/PixelCard';
+import { FaqAccordionInteractive } from '@/components/motion/FaqAccordionInteractive';
+import { StarfieldBackground } from '@/components/motion/StarfieldBackground';
+import { HeroVelocityGuarantee } from '@/components/motion/HeroVelocityGuarantee';
+import { BlurText } from '@/components/motion/BlurText';
 import { Button } from '@/components/ui/Button';
+import { CtaArrow } from '@/components/ui/CtaArrow';
 import { Badge } from '@/components/ui/Badge';
-import { Card } from '@/components/ui/Card';
+import { MobileCardCarousel } from '@/components/ui/MobileCardCarousel';
+
+// Dynamically import heavy below-the-fold motion components to optimize First Load JS and LCP
+const CategoryCardSwap = dynamic(
+  () => import('@/components/motion/CategoryCardSwap').then((m) => m.CategoryCardSwap),
+  {
+    loading: () => (
+      <div className="w-full h-[460px] rounded-card bg-surface/30 animate-pulse border border-line/40" />
+    ),
+  }
+);
+
+const CuratedCardCylinder = dynamic(
+  () => import('@/components/motion/CuratedCardCylinder').then((m) => m.CuratedCardCylinder),
+  {
+    loading: () => (
+      <div className="w-full h-[480px] rounded-card bg-surface/30 animate-pulse border border-line/40" />
+    ),
+  }
+);
+
+const TrustInteractiveGrid = dynamic(
+  () => import('@/components/motion/TrustInteractiveGrid').then((m) => m.TrustInteractiveGrid),
+  {
+    loading: () => (
+      <div className="w-full h-[380px] rounded-card bg-surface/30 animate-pulse border border-line/40" />
+    ),
+  }
+);
+
+const ShapeHeroCta = dynamic(
+  () => import('@/components/motion/ShapeHeroCta').then((m) => m.ShapeHeroCta),
+  {
+    loading: () => (
+      <div className="w-full h-[360px] rounded-feature bg-surface/30 animate-pulse border border-line/40" />
+    ),
+  }
+);
 
 export function generateStaticParams() {
   return SUPPORTED_LOCALES.map((locale) => ({ locale }));
@@ -40,303 +71,508 @@ export default async function LocalizedHomePage({
   }
   const typedLocale = locale as Locale;
   const dict = dictionaries[typedLocale];
-  const featuredPlans = DEMO_PLANS.filter((p) => p.isFeatured);
-
-  const categoryIcons = {
-    ai: <Cpu className="w-5 h-5" />,
-    design: <Palette className="w-5 h-5" />,
-    video: <Video className="w-5 h-5" />,
-    productivity: <Workflow className="w-5 h-5" />,
-    developer: <Layers className="w-5 h-5" />,
-  };
+  const [rawCatalog, rawCategories] = await Promise.all([
+    fetchCatalogProducts({ locale: typedLocale, limit: 12 }),
+    fetchCategories(typedLocale),
+  ]);
+  const mappedPlans = rawCatalog.items.map((item) =>
+    mapApiProductToStorefrontPlan(item, typedLocale),
+  );
+  const preferredFeaturedSlugs = new Set([
+    'claude-pro',
+    'canva-pro',
+    'chatgpt-plus',
+    'capcut-pro',
+    'cursor-pro',
+  ]);
+  const preferredFeatured = mappedPlans.filter((p) => preferredFeaturedSlugs.has(p.slug));
+  const featuredPlans = (preferredFeatured.length > 0 ? preferredFeatured : mappedPlans).slice(0, 5);
+  const categoriesWithResolvedImages = rawCategories.map((cat) => ({
+    ...cat,
+    resolvedImage: resolveCategoryImagePath(cat.imageUrl, cat.slug),
+  }));
 
   return (
-    <main className="space-y-24 sm:space-y-32">
-      {/* 1. HERO SECTION */}
-      <section className="relative pt-12 pb-8 sm:pt-20 sm:pb-16 overflow-hidden">
-        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-            {/* Hero Copy */}
-            <div className="lg:col-span-7 text-start">
-              <div className="inline-flex items-center gap-2 bg-tooly-soft-red text-tooly-red text-xs sm:text-sm font-bold px-3.5 py-1.5 rounded-full border border-tooly-red/20 mb-6">
+    <div className="relative isolate min-h-screen">
+      {/* Three.js Interactive Starfield Tunnel Background */}
+      <StarfieldBackground />
+
+      <main className="relative z-10 space-y-16 sm:space-y-32">
+        {/* 1. HERO SECTION */}
+        <section className="relative pt-1 pb-4 sm:pt-2 sm:pb-16 overflow-hidden">
+          <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-8 items-center">
+              {/* Hero Copy */}
+              <div className="lg:col-span-5 text-start">
+                {/* <div className="inline-flex items-center gap-2 bg-tooly-soft-red text-tooly-red text-xs sm:text-sm font-bold px-3.5 py-1.5 rounded-full border border-tooly-red/20 mb-6">
                 <span className="w-2 h-2 rounded-full bg-tooly-red animate-pulse" />
                 <span>{dict.hero.badge}</span>
+              </div> */}
+
+                <h1 className="text-2xl sm:text-5xl lg:text-5xl font-extrabold text-ink tracking-tight leading-[1.15] mb-2 md:mb-6">
+                  <BlurText
+                    as="span"
+                    text={dict.hero.titlePart1}
+                    delay={100}
+                    animateBy="words"
+                    direction="top"
+                    className="inline"
+                  />{' '}
+                  <span className="text-tooly-red underline decoration-tooly-red/30 underline-offset-8 inline">
+                    <BlurText
+                      as="span"
+                      text={dict.hero.titleHighlight}
+                      delay={100}
+                      animateBy="words"
+                      direction="top"
+                      className="inline"
+                    />
+                  </span>{' '}
+                  {dict.hero.titlePart2 ? (
+                    <BlurText
+                      as="span"
+                      text={dict.hero.titlePart2}
+                      delay={100}
+                      animateBy="words"
+                      direction="top"
+                      className="inline"
+                    />
+                  ) : null}
+                </h1>
+
+                <BlurText
+                  as="p"
+                  text={dict.hero.description}
+                  delay={40}
+                  animateBy="words"
+                  direction="top"
+                  className="text-xs sm:text-lg text-muted leading-relaxed max-w-2xl mb-4 sm:mb-8"
+                />
+
+                {/* CTAs */}
+                <div className="flex flex-row sm:flex-row items-stretch sm:items-center gap-3 mb-3 md:mb-10">
+                  <Link href={`/${typedLocale}/catalog`}>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="w-full sm:w-auto md:text-sm md:px-4 md:py-2.5 md:gap-2"
+                    >
+
+                      <BlurText
+                        as="span"
+                        text={dict.hero.primaryCta}
+                        delay={60}
+                        animateBy="words"
+                        direction="top"
+                        className="inline"
+                      />
+                      <CtaArrow className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                    </Button>
+                  </Link>
+                  <a href="#how-it-works">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto md:text-sm md:px-4 md:py-2.5 md:gap-2"
+                    >
+                      <BlurText
+                        as="span"
+                        text={dict.hero.secondaryCta}
+                        delay={60}
+                        animateBy="words"
+                        direction="top"
+                        className="inline"
+                      />
+                    </Button>
+                  </a>
+                </div>
+
+                {/* Value propositions */}
+                <div className="pt-3 sm:pt-6 border-t border-line grid grid-cols-3 sm:grid-cols-3 gap-2 sm:gap-3 text-[10px] md:text-xs font-semibold text-ink">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <BlurText
+                      as="span"
+                      text={dict.hero.feature1}
+                      delay={50}
+                      animateBy="words"
+                      direction="top"
+                      className="inline"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <BlurText
+                      as="span"
+                      text={dict.hero.feature2}
+                      delay={50}
+                      animateBy="words"
+                      direction="top"
+                      className="inline"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <BlurText
+                      as="span"
+                      text={dict.hero.feature3}
+                      delay={50}
+                      animateBy="words"
+                      direction="top"
+                      className="inline"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-ink tracking-tight leading-[1.15] mb-6">
-                {dict.hero.titlePart1}{' '}
-                <span className="text-tooly-red underline decoration-tooly-red/30 underline-offset-8">
-                  {dict.hero.titleHighlight}
-                </span>{' '}
-                {dict.hero.titlePart2}
-              </h1>
+              {/* Hero Interactive 3D / Tactile Scene */}
+              <div className="lg:col-span-7 flex justify-center w-full md:pt-0 pt-10 lg:-me-4 xl:-me-8">
+                <HeroInteractiveScene locale={typedLocale} dict={dict.heroScene} />
+              </div>
+            </div>
+          </div>
+        </section>
 
-              <p className="text-base sm:text-lg text-muted leading-relaxed max-w-2xl mb-8">
-                {dict.hero.description}
-              </p>
+        {/* 30-DEGREE SCROLL VELOCITY GUARANTEE BANNER */}
+        <HeroVelocityGuarantee dict={dict.velocityGuarantee} locale={typedLocale} />
 
-              {/* CTAs */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-10">
-                <Link href={`/${typedLocale}/catalog`}>
-                  <Button variant="primary" size="lg" className="w-full sm:w-auto">
-                    <span>{dict.hero.primaryCta}</span>
-                    <ArrowRight className="w-4 h-4 rtl:rotate-180" />
-                  </Button>
-                </Link>
-                <a href="#how-it-works">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                    <span>{dict.hero.secondaryCta}</span>
-                  </Button>
-                </a>
+        {/* 2. CATEGORY DISCOVERY SECTION */}
+        <section id="categories" className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-10 md:scroll-mt-24">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-14 items-center">
+            {/* Writing Side */}
+            <div className="lg:col-span-5 text-start space-y-6">
+              <div>
+                <Badge variant="accent" size="sm" className="mb-3">
+                  <BlurText
+                    as="span"
+                    text={dict.categories.badge}
+                    delay={60}
+                    animateBy="words"
+                    direction="top"
+                    className="inline"
+                  />
+                </Badge>
+                <BlurText
+                  as="h2"
+                  text={dict.categories.title}
+                  delay={70}
+                  animateBy="words"
+                  direction="top"
+                  className="text-2xl sm:text-4xl font-extrabold text-ink tracking-tight mb-3"
+                />
+                <BlurText
+                  as="p"
+                  text={dict.categories.subtitle}
+                  delay={40}
+                  animateBy="words"
+                  direction="top"
+                  className="text-sm sm:text-base text-muted leading-relaxed"
+                />
               </div>
 
               {/* Value propositions */}
-              <div className="pt-6 border-t border-line grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-semibold text-ink">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>{dict.hero.feature1}</span>
+              <div className="space-y-3 pt-2">
+                <div className="flex items-start gap-3 text-xs sm:text-sm text-ink font-semibold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <BlurText
+                    as="span"
+                    text={dict.categories.feature1}
+                    delay={50}
+                    animateBy="words"
+                    direction="top"
+                    className="inline"
+                  />
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>{dict.hero.feature2}</span>
+                <div className="flex items-start gap-3 text-xs sm:text-sm text-ink font-semibold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <BlurText
+                    as="span"
+                    text={dict.categories.feature2}
+                    delay={50}
+                    animateBy="words"
+                    direction="top"
+                    className="inline"
+                  />
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>{dict.hero.feature3}</span>
+                <div className="flex items-start gap-3 text-xs sm:text-sm text-ink font-semibold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <BlurText
+                    as="span"
+                    text={dict.categories.feature3}
+                    delay={50}
+                    animateBy="words"
+                    direction="top"
+                    className="inline"
+                  />
                 </div>
+              </div>
+
+              {/* CTA Button to browse categories */}
+              <div className="pt-2">
+                <Link href={`/${typedLocale}/catalog`}>
+                  <Button variant="primary" size="md" className="w-full sm:w-auto">
+
+                    <BlurText
+                      as="span"
+                      text={dict.categories.exploreCta}
+                      delay={60}
+                      animateBy="words"
+                      direction="top"
+                      className="inline"
+                    />
+                    <CtaArrow className="w-4 h-4" />
+                  </Button>
+                </Link>
               </div>
             </div>
 
-            {/* Hero Interactive 3D / Tactile Scene */}
-            <div className="lg:col-span-5 flex justify-center">
-              <HeroInteractiveScene locale={typedLocale} />
+            {/* Categories CardSwap 3D Stack */}
+            <div className="lg:col-span-7 flex justify-center w-full">
+              <CategoryCardSwap
+                locale={typedLocale}
+                dict={dict.categories}
+                categories={categoriesWithResolvedImages}
+              />
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* 2. CATEGORY DISCOVERY SECTION */}
-      <section id="categories" className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
-        <div className="text-start mb-10">
-          <Badge variant="accent" size="sm" className="mb-2">
-            التصنيفات المعتمدة
-          </Badge>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-ink mb-2">
-            {dict.categories.title}
-          </h2>
-          <p className="text-sm text-muted max-w-xl">{dict.categories.subtitle}</p>
-        </div>
+        {/* 3. CURATED FEATURED PLANS (3D Horizontal Cylinder Carousel) */}
+        <section id="curated" className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-20">
+          <CuratedCardCylinder
+            plans={featuredPlans}
+            locale={typedLocale}
+            dict={dict.curated}
+          />
+        </section>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          {(['ai', 'design', 'video', 'productivity', 'developer'] as const).map((catKey) => {
-            const cat = dict.categories[catKey];
-            return (
-              <Link
-                key={catKey}
-                href={`/${typedLocale}/catalog?category=${catKey}`}
-                className="group block"
+        {/* 4. HOW IT WORKS */}
+        <section id="how-it-works" className="border-y border-line py-16 sm:py-24 scroll-mt-20">
+          <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <Badge variant="accent" size="sm" className="mb-2">
+                <BlurText
+                  as="span"
+                  text={dict.howItWorksSection.badge}
+                  delay={60}
+                  animateBy="words"
+                  direction="top"
+                  className="inline"
+                />
+              </Badge>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-ink mb-3">
+                <BlurText
+                  as="span"
+                  text={dict.howItWorksSection.title}
+                  delay={70}
+                  animateBy="words"
+                  direction="top"
+                  className="inline"
+                />
+              </h2>
+              <p className="text-sm text-muted leading-relaxed">
+                <BlurText
+                  as="span"
+                  text={dict.howItWorksSection.subtitle}
+                  delay={40}
+                  animateBy="words"
+                  direction="top"
+                  className="inline"
+                />
+              </p>
+            </div>
+
+            <MobileCardCarousel
+              desktopBreakpoint="md"
+              locale={typedLocale}
+              ariaLabel={dict.howItWorksSection.title}
+            >
+              <PixelCard
+                variant="tooly"
+                theme="dark"
+                trigger="hover"
+                origin="pointer"
+                glow={0.55}
+                spotlight={0.45}
+                speed={30}
+                gap={6}
+                radius={20}
+                className="p-6 sm:p-8 text-start min-h-[220px] h-full"
               >
-                <Card hoverable className="h-full p-5 text-start">
-                  <div className="w-10 h-10 rounded-control bg-paper text-ink group-hover:bg-tooly-soft-red group-hover:text-tooly-red flex items-center justify-center mb-3 transition-colors">
-                    {categoryIcons[catKey]}
-                  </div>
-                  <h3 className="text-base font-bold text-ink group-hover:text-tooly-red transition-colors mb-1">
-                    {cat.name}
-                  </h3>
-                  <p className="text-xs text-muted leading-relaxed line-clamp-2">{cat.desc}</p>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
+                <span className="text-3xl font-black text-tooly-red/80 mb-2 block">
+                  <BlurText
+                    as="span"
+                    text="01"
+                    delay={60}
+                    animateBy="words"
+                    direction="top"
+                    className="inline"
+                  />
+                </span>
+                <h3 className="text-lg font-bold text-white mb-2">
+                  <BlurText
+                    as="span"
+                    text={dict.howItWorksSection.step1Title}
+                    delay={65}
+                    animateBy="words"
+                    direction="top"
+                    className="inline"
+                  />
+                </h3>
+                <p className="text-xs sm:text-lg text-white leading-relaxed">
+                  <BlurText
+                    as="span"
+                    text={dict.howItWorksSection.step1Desc}
+                    delay={35}
+                    animateBy="words"
+                    direction="top"
+                    color="#abababff"
+                    className="inline text-white"
+                  />
+                </p>
+              </PixelCard>
 
-      {/* 3. CURATED FEATURED PLANS */}
-      <section className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10 text-start">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="accent" size="sm">
-                عروض مختارة
-              </Badge>
-              <Badge variant="demo" size="sm">
-                {dict.common.demoBadge}
-              </Badge>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-ink mb-2">
-              {dict.curated.title}
-            </h2>
-            <p className="text-sm text-muted max-w-xl">{dict.curated.subtitle}</p>
+              <PixelCard
+                variant="amber"
+                theme="dark"
+                trigger="hover"
+                origin="pointer"
+                glow={0.5}
+                spotlight={0.45}
+                speed={30}
+                gap={6}
+                radius={20}
+                className="p-6 sm:p-8 text-start min-h-[220px] h-full"
+              >
+                <span className="text-3xl font-black text-amber-500/80 mb-2 block">
+                  <BlurText
+                    as="span"
+                    text="02"
+                    delay={60}
+                    animateBy="words"
+                    direction="top"
+                    className="inline"
+                  />
+                </span>
+                <h3 className="text-lg font-bold text-white mb-2">
+                  <BlurText
+                    as="span"
+                    text={dict.howItWorksSection.step2Title}
+                    delay={65}
+                    animateBy="words"
+                    direction="top"
+                    className="inline"
+                  />
+                </h3>
+                <p className="text-xs sm:text-lg text-white leading-relaxed">
+                  <BlurText
+                    as="span"
+                    text={dict.howItWorksSection.step2Desc}
+                    delay={35}
+                    animateBy="words"
+                    direction="top"
+                    color="#abababff"
+                    className="inline text-white"
+                  />
+                </p>
+              </PixelCard>
+
+              <PixelCard
+                variant="emerald"
+                theme="dark"
+                trigger="hover"
+                origin="pointer"
+                glow={0.5}
+                spotlight={0.45}
+                speed={30}
+                gap={6}
+                radius={20}
+                className="p-6 sm:p-8 text-start min-h-[220px] h-full"
+              >
+                <span className="text-3xl font-black text-emerald-600/80 mb-2 block">
+                  <BlurText
+                    as="span"
+                    text="03"
+                    delay={60}
+                    animateBy="words"
+                    direction="top"
+                    className="inline"
+                  />
+                </span>
+                <h3 className="text-lg font-bold text-white mb-2">
+                  <BlurText
+                    as="span"
+                    text={dict.howItWorksSection.step3Title}
+                    delay={65}
+                    animateBy="words"
+                    direction="top"
+                    className="inline"
+                  />
+                </h3>
+                <p className="text-xs sm:text-lg text-white leading-relaxed">
+                  <BlurText
+                    as="span"
+                    text={dict.howItWorksSection.step3Desc}
+                    delay={35}
+                    animateBy="words"
+                    direction="top"
+                    color="#abababff"
+                    className="inline text-white"
+                  />
+                </p>
+              </PixelCard>
+            </MobileCardCarousel>
           </div>
-          <Link href={`/${typedLocale}/catalog`}>
-            <Button variant="outline" size="sm">
-              <span>{dict.common.viewCatalog}</span>
-              <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
-            </Button>
-          </Link>
-        </div>
+        </section>
 
-        {/* Demo Notice Alert */}
-        <div className="bg-amber-50/70 border border-amber-200/80 rounded-control p-3.5 mb-8 text-xs text-amber-900 flex items-center gap-2.5 text-start">
-          <HelpCircle className="w-4 h-4 text-amber-700 shrink-0" />
-          <span>{dict.common.demoNotice}</span>
-        </div>
+        {/* 5. TRUST & TRANSPARENCY SECTION */}
+        <section id="trust" className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24 relative">
+          {/* Artistic ambient aura backdrop */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-5xl h-96 bg-gradient-to-r from-tooly-red/8 via-amber-500/8 to-emerald-500/8 blur-3xl pointer-events-none rounded-full -z-10" />
 
-        <ScrollRevealSequence className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredPlans.map((plan) => (
-            <PlanCard key={plan.id} plan={plan} locale={typedLocale} />
-          ))}
-        </ScrollRevealSequence>
-      </section>
-
-      {/* 4. HOW IT WORKS */}
-      <section id="how-it-works" className="bg-surface border-y border-line py-16 sm:py-24 scroll-mt-20">
-        <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-start mb-12 sm:mb-16">
             <Badge variant="accent" size="sm" className="mb-2">
-              سهولة وأمان
+              <BlurText
+                as="span"
+                text={dict.trustSection.badge}
+                delay={60}
+                animateBy="words"
+                direction="top"
+                className="inline"
+              />
             </Badge>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-ink mb-3">
-              {dict.howItWorksSection.title}
-            </h2>
-            <p className="text-sm text-muted leading-relaxed">{dict.howItWorksSection.subtitle}</p>
+            <BlurText
+              as="h2"
+              text={dict.trustSection.title}
+              delay={70}
+              animateBy="words"
+              direction="top"
+              className="text-2xl sm:text-4xl font-extrabold text-ink mb-3 tracking-tight"
+            />
+            <BlurText
+              as="p"
+              text={dict.trustSection.subtitle}
+              delay={40}
+              animateBy="words"
+              direction="top"
+              className="text-sm sm:text-base text-muted max-w-2xl leading-relaxed"
+            />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            <div className="bg-paper p-6 sm:p-8 rounded-card border border-line text-start relative">
-              <span className="text-3xl font-black text-tooly-red/30 mb-2 block">01</span>
-              <h3 className="text-lg font-bold text-ink mb-2">
-                {dict.howItWorksSection.step1Title}
-              </h3>
-              <p className="text-xs sm:text-sm text-muted leading-relaxed">
-                {dict.howItWorksSection.step1Desc}
-              </p>
-            </div>
+          {/* 3D Interactive Luminous Trust Grid */}
+          <TrustInteractiveGrid dict={dict.trustSection} locale={typedLocale} />
+        </section>
 
-            <div className="bg-paper p-6 sm:p-8 rounded-card border border-line text-start relative">
-              <span className="text-3xl font-black text-tooly-red/30 mb-2 block">02</span>
-              <h3 className="text-lg font-bold text-ink mb-2">
-                {dict.howItWorksSection.step2Title}
-              </h3>
-              <p className="text-xs sm:text-sm text-muted leading-relaxed">
-                {dict.howItWorksSection.step2Desc}
-              </p>
-            </div>
+        {/* 6. FAQ ACCORDION */}
+        <section id="faq" className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
+          <FaqAccordionInteractive dict={dict.faqSection} locale={typedLocale} />
+        </section>
 
-            <div className="bg-paper p-6 sm:p-8 rounded-card border border-line text-start relative">
-              <span className="text-3xl font-black text-tooly-red/30 mb-2 block">03</span>
-              <h3 className="text-lg font-bold text-ink mb-2">
-                {dict.howItWorksSection.step3Title}
-              </h3>
-              <p className="text-xs sm:text-sm text-muted leading-relaxed">
-                {dict.howItWorksSection.step3Desc}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. TRUST & TRANSPARENCY SECTION */}
-      <section id="trust" className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
-        <div className="text-start mb-12">
-          <Badge variant="accent" size="sm" className="mb-2">
-            مبادئنا الأساسية
-          </Badge>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-ink mb-2">
-            {dict.trustSection.title}
-          </h2>
-          <p className="text-sm text-muted max-w-xl">{dict.trustSection.subtitle}</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="text-start p-6 sm:p-8 bg-surface">
-            <div className="w-12 h-12 rounded-control bg-emerald-50 text-emerald-700 flex items-center justify-center mb-4">
-              <Zap className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-ink mb-2">{dict.trustSection.pillar1Title}</h3>
-            <p className="text-xs sm:text-sm text-muted leading-relaxed">
-              {dict.trustSection.pillar1Desc}
-            </p>
-          </Card>
-
-          <Card className="text-start p-6 sm:p-8 bg-surface">
-            <div className="w-12 h-12 rounded-control bg-tooly-soft-red text-tooly-red flex items-center justify-center mb-4">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-ink mb-2">{dict.trustSection.pillar2Title}</h3>
-            <p className="text-xs sm:text-sm text-muted leading-relaxed">
-              {dict.trustSection.pillar2Desc}
-            </p>
-          </Card>
-
-          <Card className="text-start p-6 sm:p-8 bg-surface">
-            <div className="w-12 h-12 rounded-control bg-amber-50 text-amber-700 flex items-center justify-center mb-4">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-ink mb-2">{dict.trustSection.pillar3Title}</h3>
-            <p className="text-xs sm:text-sm text-muted leading-relaxed">
-              {dict.trustSection.pillar3Desc}
-            </p>
-          </Card>
-        </div>
-      </section>
-
-      {/* 6. FAQ ACCORDION */}
-      <section id="faq" className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
-        <div className="text-center mb-12">
-          <Badge variant="accent" size="sm" className="mb-2">
-            إجابات واضحة
-          </Badge>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-ink mb-2">
-            {dict.faqSection.title}
-          </h2>
-          <p className="text-sm text-muted">{dict.faqSection.subtitle}</p>
-        </div>
-
-        <div className="space-y-4 text-start">
-          {dict.faqSection.items.map((item, idx) => (
-            <details
-              key={idx}
-              className="group bg-surface rounded-card border border-line p-5 transition-all duration-200 open:shadow-sm"
-            >
-              <summary className="font-bold text-sm sm:text-base text-ink cursor-pointer flex items-center justify-between list-none select-none">
-                <span>{item.q}</span>
-                <span className="text-muted group-open:rotate-180 transition-transform">▼</span>
-              </summary>
-              <p className="mt-3 text-xs sm:text-sm text-muted leading-relaxed pt-3 border-t border-line">
-                {item.a}
-              </p>
-            </details>
-          ))}
-        </div>
-      </section>
-
-      {/* 7. BOTTOM CALL TO ACTION */}
-      <section className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <div className="bg-ink text-surface rounded-feature p-8 sm:p-12 lg:p-16 text-center relative overflow-hidden">
-          <div className="absolute w-96 h-96 bg-tooly-red/10 rounded-full blur-3xl -top-20 -left-20 pointer-events-none" />
-          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-4 max-w-xl mx-auto leading-tight">
-            جاهز لرفع إنتاجيتك بالحلول الرقمية الحديثة؟
-          </h2>
-          <p className="text-surface/80 text-sm sm:text-base max-w-lg mx-auto mb-8 leading-relaxed">
-            تصفح كتالوج الأدوات المتاح حالياً وتواصل معنا لاختيار الخطة الأنسب لعملك أو دراستك.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href={`/${typedLocale}/catalog`}>
-              <Button variant="primary" size="lg">
-                <span>{dict.common.viewCatalog}</span>
-                <ArrowRight className="w-4 h-4 rtl:rotate-180" />
-              </Button>
-            </Link>
-            <a
-              href="mailto:support@tooly.tn"
-              className="inline-flex items-center justify-center font-semibold rounded-control transition-all duration-200 border border-surface/20 hover:bg-surface/10 text-surface text-base px-6 py-3.5"
-            >
-              {dict.common.contactSupport}
-            </a>
-          </div>
-        </div>
-      </section>
-    </main>
+        {/* 7. BOTTOM CALL TO ACTION */}
+        <section className="w-full">
+          <ShapeHeroCta dict={dict} locale={typedLocale} />
+        </section>
+      </main>
+    </div>
   );
 }

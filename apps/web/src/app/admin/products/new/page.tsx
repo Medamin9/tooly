@@ -1,17 +1,73 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, PlusCircle, CheckCircle2, AlertCircle } from 'lucide-react';
-import { createAdminProduct } from '@/lib/api/admin';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
+import {
+  createAdminProduct,
+  fetchAdminCatalogOptions,
+  fetchAdminCategories,
+} from '@/lib/api/admin';
+import { fetchCatalogOptions } from '@/lib/api/catalog';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+
+type PackLocale = 'ar' | 'fr' | 'en';
+
+interface SelectChoice {
+  code: string;
+  label: string;
+}
+
+const LOCALE_TABS: Array<{ key: PackLocale; label: string }> = [
+  { key: 'ar', label: 'العربية (AR)' },
+  { key: 'fr', label: 'Français (FR)' },
+  { key: 'en', label: 'English (EN)' },
+];
+
+const DEFAULT_DELIVERIES: SelectChoice[] = [
+  { code: 'OFFLINE_TRANSFER', label: 'طلب عبر التحويل أو الدفع المحلي (تونس)' },
+  { code: 'MANUAL_SUPPORT', label: 'تفعيل يدوي سريع عبر دعم Tooly.tn' },
+  { code: 'TEAM_INVITE', label: 'دعوة مساحة عمل رسمية على بريدك الشخصي' },
+  { code: 'CREDENTIALS_PROVISION', label: 'إعداد وتسليم بيانات حساب مخصص وآمن' },
+  { code: 'VOUCHER_CODE', label: 'تسليم كود تفعيل فوري عبر البريد' },
+];
+
+const DEFAULT_DURATIONS: SelectChoice[] = [
+  { code: '1_month', label: 'شهر واحد (1_month)' },
+  { code: '3_months', label: '3 أشهر (3_months)' },
+  { code: '6_months', label: '6 أشهر (6_months)' },
+  { code: '1_year', label: 'سنة كاملة (1_year)' },
+  { code: 'lifetime', label: 'مدى الحياة (lifetime)' },
+];
+
+const DEFAULT_CATEGORIES: SelectChoice[] = [
+  { code: 'ai', label: 'الذكاء الاصطناعي (ai)' },
+  { code: 'design', label: 'التصميم والجرافيك (design)' },
+  { code: 'video', label: 'المونتاج وصناعة الفيديو (video)' },
+  { code: 'productivity', label: 'الإنتاجية (productivity)' },
+  { code: 'developer', label: 'أدوات المطورين (developer)' },
+];
+
+function linesToArray(text: string): string[] {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
 
 export default function NewProductPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [packLocale, setPackLocale] = useState<PackLocale>('ar');
+  const [categoryChoices, setCategoryChoices] =
+    useState<SelectChoice[]>(DEFAULT_CATEGORIES);
+  const [deliveryChoices, setDeliveryChoices] =
+    useState<SelectChoice[]>(DEFAULT_DELIVERIES);
+  const [durationChoices, setDurationChoices] =
+    useState<SelectChoice[]>(DEFAULT_DURATIONS);
 
   const [form, setForm] = useState({
     slug: '',
@@ -26,7 +82,84 @@ export default function NewProductPage() {
     variantSlug: '',
     duration: '1_month',
     price: 79.0,
+    featuresText: {
+      ar: 'وصول متميز للخدمة\nدعم فني محلي من Tooly.tn',
+      fr: 'Accès complet au service\nSupport local Tooly.tn',
+      en: 'Full plan access\nLocal Tooly.tn support',
+    },
+    restrictionsText: {
+      ar: 'استخدام مطابق لشروط المزود القياسية',
+      fr: 'Usage conforme aux conditions officielles',
+      en: 'Subject to official provider terms',
+    },
   });
+
+  useEffect(() => {
+    let mounted = true;
+    const loadChoices = async () => {
+      try {
+        const cats = await fetchAdminCategories().catch(() => []);
+        if (mounted && Array.isArray(cats) && cats.length > 0) {
+          setCategoryChoices(
+            cats.map((c: any) => ({
+              code: c.slug,
+              label: `${c.name?.ar || c.slug} (${c.slug})`,
+            })),
+          );
+        }
+      } catch {
+        // Keep fallback
+      }
+
+      try {
+        const adminOpts = await fetchAdminCatalogOptions();
+        if (!mounted) return;
+        if (adminOpts.deliveryMethods?.length) {
+          setDeliveryChoices(
+            adminOpts.deliveryMethods.map((o) => ({
+              code: o.code,
+              label: `${o.label.ar} (${o.code})`,
+            })),
+          );
+        }
+        if (adminOpts.durations?.length) {
+          setDurationChoices(
+            adminOpts.durations.map((o) => ({
+              code: o.code,
+              label: `${o.label.ar} (${o.code})`,
+            })),
+          );
+        }
+      } catch {
+        try {
+          const publicOpts = await fetchCatalogOptions('ar', 'no-store');
+          if (!mounted) return;
+          if (publicOpts.deliveryMethods?.length) {
+            setDeliveryChoices(
+              publicOpts.deliveryMethods.map((o) => ({
+                code: o.code,
+                label: `${o.label} (${o.code})`,
+              })),
+            );
+          }
+          if (publicOpts.durations?.length) {
+            setDurationChoices(
+              publicOpts.durations.map((o) => ({
+                code: o.code,
+                label: `${o.label} (${o.code})`,
+              })),
+            );
+          }
+        } catch {
+          // Keep defaults
+        }
+      }
+    };
+    loadChoices();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,8 +182,16 @@ export default function NewProductPage() {
           duration: form.duration,
           price: Number(form.price),
           isAvailable: true,
-          features: ['وصول متميز للخدمة', 'دعم فني محلي من Tooly.tn'],
-          restrictions: ['استخدام مطابق لشروط المزود القياسية'],
+          features: {
+            ar: linesToArray(form.featuresText.ar),
+            fr: linesToArray(form.featuresText.fr),
+            en: linesToArray(form.featuresText.en),
+          },
+          restrictions: {
+            ar: linesToArray(form.restrictionsText.ar),
+            fr: linesToArray(form.restrictionsText.fr),
+            en: linesToArray(form.restrictionsText.en),
+          },
         },
       ],
     };
@@ -94,7 +235,7 @@ export default function NewProductPage() {
             البيانات الأساسية للمنتج
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-semibold text-ink mb-1">الرمز التعريفي (Slug)</label>
               <input
@@ -114,11 +255,11 @@ export default function NewProductPage() {
                 onChange={(e) => setForm({ ...form, categorySlug: e.target.value })}
                 className="w-full px-3 py-2 bg-paper text-ink text-xs rounded-control border border-line focus:outline-none focus:border-tooly-red"
               >
-                <option value="ai">الذكاء الاصطناعي (AI)</option>
-                <option value="design">التصميم والجرافيك</option>
-                <option value="video">المونتاج وصناعة الفيديو</option>
-                <option value="productivity">الإنتاجية</option>
-                <option value="developer">أدوات المطورين</option>
+                {categoryChoices.map((cat) => (
+                  <option key={cat.code} value={cat.code}>
+                    {cat.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -132,6 +273,23 @@ export default function NewProductPage() {
                 placeholder="e.g. Anthropic, Canva, OpenAI"
                 className="w-full px-3 py-2 bg-paper text-ink text-xs rounded-control border border-line focus:outline-none focus:border-tooly-red"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1">
+                طريقة التفعيل والتسليم
+              </label>
+              <select
+                value={form.deliveryMethod}
+                onChange={(e) => setForm({ ...form, deliveryMethod: e.target.value })}
+                className="w-full px-3 py-2 bg-paper text-ink text-xs rounded-control border border-line focus:outline-none focus:border-tooly-red"
+              >
+                {deliveryChoices.map((opt) => (
+                  <option key={opt.code} value={opt.code}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </Card>
@@ -259,9 +417,11 @@ export default function NewProductPage() {
                 onChange={(e) => setForm({ ...form, duration: e.target.value })}
                 className="w-full px-3 py-2 bg-paper text-ink text-xs rounded-control border border-line"
               >
-                <option value="1_month">شهر واحد (1 month)</option>
-                <option value="3_months">3 أشهر (3 months)</option>
-                <option value="1_year">سنة كاملة (1 year)</option>
+                {durationChoices.map((opt) => (
+                  <option key={opt.code} value={opt.code}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -289,6 +449,92 @@ export default function NewProductPage() {
                 />
                 <span>نشر فوري في المتجر</span>
               </label>
+            </div>
+          </div>
+
+          <div className="pt-2 space-y-3 border-t border-line">
+            <div className="flex items-center justify-between flex-wrap gap-2 bg-paper px-3 py-2 rounded-control border border-line">
+              <span className="text-xs font-bold text-ink">
+                ميزات وقيود الباقة باللغات الثلاث:
+              </span>
+              <div role="tablist" className="flex items-center gap-1.5">
+                {LOCALE_TABS.map((tab) => {
+                  const active = packLocale === tab.key;
+                  const count =
+                    linesToArray(form.featuresText[tab.key]).length +
+                    linesToArray(form.restrictionsText[tab.key]).length;
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setPackLocale(tab.key)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-control text-xs font-bold transition-colors ${
+                        active
+                          ? 'bg-tooly-red text-surface shadow-sm'
+                          : 'bg-surface text-muted hover:text-ink border border-line'
+                      }`}
+                    >
+                      <span>{tab.label}</span>
+                      <span
+                        className={`px-1.5 rounded-full text-[10px] font-mono ${
+                          active
+                            ? 'bg-surface/20 text-surface'
+                            : 'bg-paper text-muted'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div
+              dir={packLocale === 'ar' ? 'rtl' : 'ltr'}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1">
+                  الميزات ({packLocale.toUpperCase()}) — سطر لكل ميزة
+                </label>
+                <textarea
+                  rows={3}
+                  value={form.featuresText[packLocale]}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      featuresText: {
+                        ...form.featuresText,
+                        [packLocale]: e.target.value,
+                      },
+                    })
+                  }
+                  className="w-full px-3 py-2 bg-paper text-ink text-xs rounded-control border border-line"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1">
+                  القيود والشروط ({packLocale.toUpperCase()}) — سطر لكل قيد
+                </label>
+                <textarea
+                  rows={3}
+                  value={form.restrictionsText[packLocale]}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      restrictionsText: {
+                        ...form.restrictionsText,
+                        [packLocale]: e.target.value,
+                      },
+                    })
+                  }
+                  className="w-full px-3 py-2 bg-paper text-ink text-xs rounded-control border border-line"
+                />
+              </div>
             </div>
           </div>
         </Card>

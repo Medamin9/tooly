@@ -1,7 +1,14 @@
+export interface LocalizedOptionLabelDto {
+  ar: string;
+  fr: string;
+  en: string;
+}
+
 export interface PlanVariantResponseDto {
   id: string;
   slug: string;
   duration: string;
+  durationLabels?: LocalizedOptionLabelDto;
   price: number;
   currency: string;
   isAvailable: boolean;
@@ -20,6 +27,7 @@ export interface ProductResponseDto {
   categorySlug: string;
   categoryName?: string;
   deliveryMethod: string;
+  deliveryMethodLabels?: LocalizedOptionLabelDto;
   isPublished: boolean;
   isDemo: boolean;
   iconUrl?: string | null;

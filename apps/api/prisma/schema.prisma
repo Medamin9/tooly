@@ -36,6 +36,27 @@ enum DeliveryMethod {
   CREDENTIALS_PROVISION
 }
 
+enum CatalogOptionKind {
+  DELIVERY_METHOD
+  DURATION
+}
+
+model CatalogOption {
+  id        String            @id @default(uuid())
+  kind      CatalogOptionKind
+  code      String
+  labelAr   String
+  labelFr   String
+  labelEn   String
+  sortOrder Int               @default(0)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@unique([kind, code])
+  @@index([kind, sortOrder])
+  @@map("catalog_options")
+}
+
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -58,6 +79,7 @@ model Category {
   slug      String    @unique
   sortOrder Int       @default(0)
   isActive  Boolean   @default(true)
+  imageUrl  String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
@@ -71,7 +93,7 @@ model Product {
   slug           String          @unique
   categoryId     String
   provider       String          // e.g. "Anthropic", "OpenAI", "Canva"
-  deliveryMethod DeliveryMethod  @default(OFFLINE_TRANSFER)
+  deliveryMethod String          @default("OFFLINE_TRANSFER")
   isPublished    Boolean         @default(true)
   isDemo         Boolean         @default(true) // Explicit demo indicator
   sortOrder      Int             @default(0)

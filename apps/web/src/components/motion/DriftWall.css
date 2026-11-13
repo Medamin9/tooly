@@ -1,0 +1,249 @@
+/* DriftWall.css — React Bits 3D Drifting Wall customized for Tooly.tn offers */
+
+.drift-wall {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  perspective: var(--dw-perspective, 1100px);
+  perspective-origin: 50% 50%;
+  --dw-tile-w: 215px;
+  --dw-tile-h: 152px;
+  --dw-gap: 16px;
+  --dw-radius: 14px;
+  --dw-lift: 52px;
+  --dw-dim: 0.85;
+  --dw-edge: 45%;
+
+  -webkit-mask-image:
+    radial-gradient(ellipse 90% 90% at 50% 50%, #000 var(--dw-edge), transparent 100%),
+    linear-gradient(to top, #000 var(--dw-edge), transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(ellipse 90% 90% at 50% 50%, #000 var(--dw-edge), transparent 100%),
+    linear-gradient(to top, #000 var(--dw-edge), transparent 100%);
+  mask-composite: intersect;
+}
+
+.drift-wall__plane {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: row;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.drift-wall__col {
+  position: relative;
+  width: calc(var(--dw-tile-w) + var(--dw-gap));
+  transform-style: preserve-3d;
+}
+
+.drift-wall__track {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+
+.drift-wall__tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: calc(var(--dw-tile-h) + var(--dw-gap));
+  flex: 0 0 auto;
+  outline: none;
+  transform-style: preserve-3d;
+  text-decoration: none;
+  color: inherit;
+}
+
+.drift-wall__inner {
+  position: absolute;
+  inset: calc(var(--dw-gap) / 2);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--dw-radius);
+  overflow: hidden;
+  background: rgb(var(--color-surface));
+  opacity: var(--dw-dim);
+  transform: translateZ(0);
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  border: 1px solid rgb(var(--color-line));
+  box-shadow: 0 4px 16px -3px rgba(23, 25, 31, 0.06);
+  user-select: none;
+}
+
+.dark .drift-wall__inner {
+  box-shadow: 0 4px 20px -3px rgba(0, 0, 0, 0.45);
+}
+
+/* Hover and Focus Active Lift Effect */
+.drift-wall__tile.is-active .drift-wall__inner,
+.drift-wall__tile:focus-visible .drift-wall__inner {
+  opacity: 1;
+  transform: translateZ(var(--dw-lift));
+  box-shadow:
+    0 22px 46px -10px rgba(23, 25, 31, 0.18),
+    0 0 0 1.5px #F52F3D;
+  border-color: #F52F3D;
+  z-index: 20;
+}
+
+.drift-wall__tile:focus-visible {
+  outline: none;
+}
+
+/* Cloud Layers & Side Atmospheric Mist */
+.hero-clouds-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  overflow: hidden;
+}
+
+/* Edge mist gradients that frame the sides of the wider wall */
+.cloud-mist-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 105px;
+  pointer-events: none;
+  z-index: 12;
+}
+
+.cloud-mist-edge--start {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    rgb(var(--color-paper) / 0.95) 0%,
+    rgb(var(--color-paper) / 0.65) 45%,
+    transparent 100%
+  );
+}
+
+.cloud-mist-edge--end {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    rgb(var(--color-paper) / 0.95) 0%,
+    rgb(var(--color-paper) / 0.65) 45%,
+    transparent 100%
+  );
+}
+
+/* Vertical mist to softly fade tracks top & bottom */
+.cloud-mist-edge--top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 52px;
+  background: linear-gradient(to bottom, rgb(var(--color-paper) / 0.92) 0%, transparent 100%);
+  z-index: 12;
+}
+
+.cloud-mist-edge--bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 68px;
+  background: linear-gradient(to top, rgb(var(--color-paper) / 0.96) 0%, rgb(var(--color-paper) / 0.45) 50%, transparent 100%);
+  z-index: 12;
+}
+
+/* Organic cloud puffs that gently drift on the sides */
+.cloud-puff {
+  position: absolute;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(250, 249, 246, 0.82) 55%,
+    transparent 78%
+  );
+  border-radius: 9999px;
+  filter: blur(14px);
+  will-change: transform;
+  pointer-events: none;
+  animation: cloudDrift 9s ease-in-out infinite alternate;
+}
+
+.cloud-puff--left-top {
+  width: 170px;
+  height: 170px;
+  top: 10%;
+  left: -45px;
+  animation-duration: 8s;
+}
+
+.cloud-puff--left-bottom {
+  width: 195px;
+  height: 195px;
+  bottom: 10%;
+  left: -55px;
+  animation-duration: 11s;
+  animation-delay: -3s;
+}
+
+.cloud-puff--right-top {
+  width: 180px;
+  height: 180px;
+  top: 8%;
+  right: -50px;
+  animation-duration: 10s;
+  animation-delay: -2s;
+}
+
+.cloud-puff--right-bottom {
+  width: 205px;
+  height: 205px;
+  bottom: 12%;
+  right: -60px;
+  animation-duration: 12s;
+  animation-delay: -5s;
+}
+
+.cloud-puff--center-bottom {
+  width: 300px;
+  height: 115px;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  filter: blur(18px);
+  animation-duration: 9s;
+  animation-delay: -1s;
+}
+
+@keyframes cloudDrift {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.04);
+  }
+  100% {
+    transform: translateY(4px) scale(0.98);
+  }
+}
+
+/* Reduced Motion Mode */
+@media (prefers-reduced-motion: reduce) {
+  .drift-wall__plane,
+  .drift-wall__track,
+  .drift-wall__inner,
+  .cloud-puff {
+    will-change: auto;
+    transition: none !important;
+    animation: none !important;
+  }
+}

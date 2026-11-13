@@ -16,11 +16,11 @@ async function main() {
 
   // 2. Seed Categories
   const categoriesData = [
-    { slug: 'ai', sortOrder: 1 },
-    { slug: 'design', sortOrder: 2 },
-    { slug: 'video', sortOrder: 3 },
-    { slug: 'productivity', sortOrder: 4 },
-    { slug: 'developer', sortOrder: 5 },
+    { slug: 'ai', sortOrder: 1, imageUrl: '/images/categories/ia.jpg' },
+    { slug: 'design', sortOrder: 2, imageUrl: '/images/categories/design.jpg' },
+    { slug: 'video', sortOrder: 3, imageUrl: '/images/categories/video.jpg' },
+    { slug: 'productivity', sortOrder: 4, imageUrl: '/images/categories/productivity.jpg' },
+    { slug: 'developer', sortOrder: 5, imageUrl: '/images/categories/devtools.jpg' },
   ];
 
   const categoryMap = new Map<string, string>();

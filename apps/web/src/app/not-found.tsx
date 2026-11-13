@@ -1,21 +1,56 @@
+import React from 'react';
+import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
+import { NotFoundView } from '@/components/layout/NotFoundView';
 
-export default function NotFound() {
+export const metadata: Metadata = {
+  title: '404 — الصفحة غير موجودة | Page introuvable | Tooly.tn',
+  description: 'الصفحة التي تبحث عنها غير موجودة على منصة Tooly.tn.',
+};
+
+export default function RootNotFound() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-paper text-ink">
-      <span className="text-sm font-bold text-tooly-red bg-tooly-soft-red px-3 py-1 rounded-full mb-4">
-        خطأ 404
-      </span>
-      <h1 className="text-3xl font-extrabold mb-2">الصفحة غير موجودة</h1>
-      <p className="text-muted text-sm max-w-md mb-6">
-        عذراً، لم نتمكن من العثور على الصفحة التي تبحث عنها على Tooly.tn.
-      </p>
-      <Link
-        href="/"
-        className="bg-ink text-surface text-xs font-semibold px-5 py-2.5 rounded-control hover:bg-ink-light transition-colors"
-      >
-        العودة إلى الصفحة الرئيسية
-      </Link>
+    <div className="min-h-screen flex flex-col bg-paper text-ink">
+      {/* Minimal Top Brand Bar */}
+      <header className="w-full border-b border-line bg-surface/70 backdrop-blur-md py-3 px-4 sm:px-8 flex items-center justify-between">
+        <Link href="/ar" className="inline-flex items-center gap-2">
+          <div className="relative h-10 w-24">
+            <Image
+              src="/images/toolyLogo.svg"
+              alt="Tooly.tn"
+              fill
+              className="object-contain"
+            />
+          </div>
+        </Link>
+
+        <div className="flex items-center gap-3 text-xs font-semibold">
+          <Link
+            href="/ar/catalog"
+            className="text-muted hover:text-ink transition-colors"
+          >
+            الكتالوج
+          </Link>
+          <span>•</span>
+          <Link
+            href="/fr/catalog"
+            className="text-muted hover:text-ink transition-colors"
+          >
+            Catalogue
+          </Link>
+        </div>
+      </header>
+
+      {/* Main 404 Mascot View */}
+      <main className="flex-1 flex items-center justify-center">
+        <NotFoundView />
+      </main>
+
+      {/* Minimal Bottom Bar */}
+      <footer className="w-full border-t border-line py-4 px-4 text-center text-xs text-muted">
+        <span>© {new Date().getFullYear()} Tooly.tn — سوق الاشتراكات الرقمية في تونس</span>
+      </footer>
     </div>
   );
 }

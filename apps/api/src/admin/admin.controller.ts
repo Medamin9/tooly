@@ -18,6 +18,12 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { AdminService } from './admin.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto, UpdatePlanVariantPriceDto } from './dto/update-product.dto';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
+import {
+  CreateCatalogOptionDto,
+  UpdateCatalogOptionDto,
+} from './dto/catalog-option.dto';
 
 @ApiTags('Admin')
 @ApiBearerAuth()
@@ -78,6 +84,68 @@ export class AdminController {
   @ApiOperation({ summary: 'Delete a product' })
   async deleteProduct(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.adminService.deleteProduct(id, req.user.id);
+  }
+
+  @Get('categories')
+  @ApiOperation({ summary: 'List all categories with localized data and product counts' })
+  async getCategories() {
+    return this.adminService.getCategories();
+  }
+
+  @Post('categories')
+  @ApiOperation({ summary: 'Create a new category with multilingual translations' })
+  async createCategory(@Body() dto: CreateCategoryDto, @Req() req: { user: { id: string } }) {
+    return this.adminService.createCategory(dto, req.user.id);
+  }
+
+  @Patch('categories/:id')
+  @ApiOperation({ summary: 'Update a category and its multilingual translations' })
+  async updateCategory(
+    @Param('id') id: string,
+    @Body() dto: UpdateCategoryDto,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.adminService.updateCategory(id, dto, req.user.id);
+  }
+
+  @Delete('categories/:id')
+  @ApiOperation({ summary: 'Delete a category if it has no associated products' })
+  async deleteCategory(@Param('id') id: string, @Req() req: { user: { id: string } }) {
+    return this.adminService.deleteCategory(id, req.user.id);
+  }
+
+  @Get('options')
+  @ApiOperation({ summary: 'List all delivery methods and duration options with usage counts' })
+  async getCatalogOptions() {
+    return this.adminService.getCatalogOptions();
+  }
+
+  @Post('options')
+  @ApiOperation({ summary: 'Create a new delivery method or duration option' })
+  async createCatalogOption(
+    @Body() dto: CreateCatalogOptionDto,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.adminService.createCatalogOption(dto, req.user.id);
+  }
+
+  @Patch('options/:id')
+  @ApiOperation({ summary: 'Update a delivery method or duration option and cascade code renames' })
+  async updateCatalogOption(
+    @Param('id') id: string,
+    @Body() dto: UpdateCatalogOptionDto,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.adminService.updateCatalogOption(id, dto, req.user.id);
+  }
+
+  @Delete('options/:id')
+  @ApiOperation({ summary: 'Delete an unused delivery method or duration option' })
+  async deleteCatalogOption(
+    @Param('id') id: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.adminService.deleteCatalogOption(id, req.user.id);
   }
 
   @Get('audit-logs')

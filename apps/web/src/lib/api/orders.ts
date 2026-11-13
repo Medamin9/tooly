@@ -3,9 +3,9 @@ import { getAuthToken } from './auth';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
 export interface CreateOrderPayload {
-  email: string;
+  email?: string;
   name: string;
-  phone?: string;
+  phone: string;
   customerNotes?: string;
   items: Array<{
     planVariantId: string;

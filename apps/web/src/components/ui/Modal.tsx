@@ -8,10 +8,24 @@ export interface ModalProps {
   onClose: () => void;
   title: string;
   description?: string;
+  size?: 'md' | 'lg' | 'xl';
   children: React.ReactNode;
 }
 
-export function Modal({ isOpen, onClose, title, description, children }: ModalProps) {
+const MODAL_SIZE_CLASS: Record<NonNullable<ModalProps['size']>, string> = {
+  md: 'max-w-lg',
+  lg: 'max-w-2xl',
+  xl: 'max-w-5xl',
+};
+
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  description,
+  size = 'md',
+  children,
+}: ModalProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -48,9 +62,9 @@ export function Modal({ isOpen, onClose, title, description, children }: ModalPr
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className="relative bg-surface rounded-card border border-line shadow-xl max-w-lg w-full p-6 sm:p-8 z-10 transition-all text-start"
+        className={`relative bg-surface rounded-card border border-line shadow-xl ${MODAL_SIZE_CLASS[size]} w-full max-h-[90vh] flex flex-col p-6 sm:p-8 z-10 transition-all text-start`}
       >
-        <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex items-start justify-between gap-4 mb-4 shrink-0">
           <div>
             <h2 id="modal-title" className="text-xl font-bold text-ink">
               {title}
@@ -60,6 +74,7 @@ export function Modal({ isOpen, onClose, title, description, children }: ModalPr
             )}
           </div>
           <button
+            type="button"
             onClick={onClose}
             aria-label="Close dialog"
             className="p-1.5 rounded-control text-muted hover:text-ink hover:bg-paper transition-colors"
@@ -68,7 +83,7 @@ export function Modal({ isOpen, onClose, title, description, children }: ModalPr
           </button>
         </div>
 
-        <div>{children}</div>
+        <div className="overflow-y-auto pe-1 -me-1">{children}</div>
       </div>
     </div>
   );

@@ -1,0 +1,50 @@
+/* 3D Cylinder Carousel Styling for Tooly.tn Curated Plans */
+
+.tooly-cylinder-wrapper {
+  perspective: 1350px;
+  transform-style: preserve-3d;
+  -webkit-font-smoothing: antialiased;
+}
+
+.tooly-preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.tooly-card-slice {
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  backface-visibility: visible;
+}
+
+.tooly-front-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.tooly-back-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/* Subtle gloss reflection overlay */
+.tooly-gloss-sheen {
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 35%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 65%
+  );
+}
+
+/* Metallic chip reflection */
+.tooly-chip-sheen {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.2) 100%
+  );
+}

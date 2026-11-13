@@ -91,6 +91,7 @@ describe('OrdersController', () => {
     const result = await controller.createOrder({
       email: 'customer@test.tn',
       name: 'Customer Test',
+      phone: '+21698000000',
       items: [{ planVariantId: 'var-1', quantity: 1 }],
     });
 

@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
+  darkMode: 'class',
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -10,24 +11,24 @@ const config: Config = {
     extend: {
       colors: {
         ink: {
-          DEFAULT: '#17191F',
-          light: '#2E323E',
+          DEFAULT: 'rgb(var(--color-ink) / <alpha-value>)',
+          light: 'rgb(var(--color-ink-light) / <alpha-value>)',
         },
         paper: {
-          DEFAULT: '#FAF9F6',
-          dark: '#F3F0EA',
+          DEFAULT: 'rgb(var(--color-paper) / <alpha-value>)',
+          dark: 'rgb(var(--color-paper-dark) / <alpha-value>)',
         },
-        surface: '#FFFFFF',
-        muted: '#6B6B70',
-        line: '#E8E5E0',
+        surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        muted: 'rgb(var(--color-muted) / <alpha-value>)',
+        line: 'rgb(var(--color-line) / <alpha-value>)',
         tooly: {
-          red: '#F52F3D',
-          'red-dark': '#C91F2D',
-          'soft-red': '#FFF0F1',
+          red: 'rgb(var(--color-tooly-red) / <alpha-value>)',
+          'red-dark': 'rgb(var(--color-tooly-red-dark) / <alpha-value>)',
+          'soft-red': 'rgb(var(--color-soft-red) / <alpha-value>)',
         },
-        success: '#237A57',
-        warning: '#9A5A12',
-        danger: '#B42318',
+        success: 'rgb(var(--color-success) / <alpha-value>)',
+        warning: 'rgb(var(--color-warning) / <alpha-value>)',
+        danger: 'rgb(var(--color-danger) / <alpha-value>)',
       },
       fontFamily: {
         sans: [

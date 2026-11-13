@@ -20,6 +20,8 @@ import { lookupOrderApi } from '@/lib/api/orders';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { OrderTicketCard } from '@/components/order/OrderTicketCard';
+import { PageLoader } from '@/components/ui/PageLoader';
 
 export default function OrderLookupPage({
   params,
@@ -27,13 +29,7 @@ export default function OrderLookupPage({
   params: Promise<{ locale: string }>;
 }) {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-[50vh] flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-2 border-tooly-red border-t-transparent animate-spin" />
-        </div>
-      }
-    >
+    <Suspense fallback={<PageLoader fullscreen={true} />}>
       <OrderLookupInner params={params} />
     </Suspense>
   );
@@ -54,22 +50,21 @@ function OrderLookupInner({
   const typedLocale = locale as Locale;
   const dict = dictionaries[typedLocale];
   const searchParams = useSearchParams();
+  const queryOrderNumber = searchParams.get('orderNumber') || '';
+  const queryEmail = searchParams.get('email') || '';
 
-  const [orderNumber, setOrderNumber] = useState(searchParams.get('orderNumber') || '');
-  const [email, setEmail] = useState(searchParams.get('email') || '');
+  const [orderNumber, setOrderNumber] = useState(queryOrderNumber);
+  const [email, setEmail] = useState(queryEmail);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<any | null>(null);
 
-  const handleLookup = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!orderNumber || !email) return;
-
+  const fetchOrder = async (num: string, em: string) => {
+    if (!num || !em) return;
     setLoading(true);
     setError(null);
-
     try {
-      const data = await lookupOrderApi(orderNumber.trim(), email.trim());
+      const data = await lookupOrderApi(num.trim(), em.trim());
       setOrder(data);
     } catch (err) {
       setError((err as Error).message || 'تعذر العثور على الطلب. تأكد من صحة رقم المرجع والبريد الإلكتروني.');
@@ -79,11 +74,20 @@ function OrderLookupInner({
     }
   };
 
+  const handleLookup = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    await fetchOrder(orderNumber, email);
+  };
+
   useEffect(() => {
-    if (orderNumber && email) {
-      handleLookup();
+    const num = searchParams.get('orderNumber') || queryOrderNumber;
+    const em = searchParams.get('email') || queryEmail;
+    if (num && em) {
+      setOrderNumber(num);
+      setEmail(em);
+      fetchOrder(num, em);
     }
-  }, []);
+  }, [searchParams]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -134,13 +138,19 @@ function OrderLookupInner({
           </div>
 
           <div className="sm:col-span-5">
-            <label className="block text-xs font-semibold text-ink mb-1">البريد الإلكتروني للطلب</label>
+            <label className="block text-xs font-semibold text-ink mb-1">
+              {typedLocale === 'ar'
+                ? 'البريد الإلكتروني أو رقم الهاتف للطلب'
+                : typedLocale === 'fr'
+                  ? 'E-mail ou numéro de téléphone'
+                  : 'Email or phone number'}
+            </label>
             <input
-              type="email"
+              type="text"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="ahmed@example.tn"
+              placeholder="ahmed@example.tn / +216 98 000 000"
               className="w-full px-3.5 py-2 bg-paper text-ink text-xs rounded-control border border-line"
             />
           </div>
@@ -169,62 +179,66 @@ function OrderLookupInner({
 
       {/* Order Status Display */}
       {order && (
-        <Card className="p-6 sm:p-8 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-line">
-            <div>
-              <span className="text-xs text-muted block">طلب رقم:</span>
-              <h2 className="text-xl font-mono font-black text-ink">{order.orderNumber}</h2>
-            </div>
-            <div>{getStatusBadge(order.status)}</div>
-          </div>
+        <div className="space-y-6">
+          <OrderTicketCard order={order} locale={typedLocale} className="mb-6" />
 
-          {/* Items Table */}
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted mb-3">العناصر المضمنة:</h3>
-            <div className="divide-y divide-line border-y border-line text-xs">
-              {order.items.map((item: any) => (
-                <div key={item.id} className="py-3 flex items-center justify-between">
-                  <div>
-                    <span className="font-bold text-ink">{item.productTitle}</span>
-                    <span className="text-muted ms-2">({item.planDuration}) × {item.quantity}</span>
-                  </div>
-                  <span className="font-mono font-bold text-ink">{item.unitPrice * item.quantity} د.ت</span>
-                </div>
-              ))}
-            </div>
-            <div className="pt-3 flex justify-between text-sm font-extrabold text-ink">
-              <span>المجموع الكلي:</span>
-              <span className="text-tooly-red font-mono">{order.totalAmount} د.ت</span>
-            </div>
-          </div>
-
-          {/* Fulfillment Status & Instructions */}
-          {order.fulfillment && (
-            <div className="bg-paper p-4 rounded-control border border-line text-xs space-y-2">
-              <div className="flex items-center gap-2 font-bold text-ink">
-                <Clock className="w-4 h-4 text-tooly-red" />
-                <span>حالة التسليم الفعلي:</span>
-                <span className="font-medium text-muted">{order.fulfillment.status}</span>
+          <Card className="p-6 sm:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-line">
+              <div>
+                <span className="text-xs text-muted block">طلب رقم:</span>
+                <h2 className="text-xl font-mono font-black text-ink">{order.orderNumber}</h2>
               </div>
-              {order.fulfillment.instructions && (
-                <p className="text-muted leading-relaxed pt-1 border-t border-line">
-                  <strong>توجيهات الدعم: </strong>
-                  {order.fulfillment.instructions}
-                </p>
-              )}
+              <div>{getStatusBadge(order.status)}</div>
             </div>
-          )}
 
-          <div className="pt-4 border-t border-line flex items-center justify-between text-xs text-muted">
-            <span>تاريخ إنشاء الطلب: {new Date(order.createdAt).toLocaleString('fr-TN')}</span>
-            <a
-              href={`mailto:support@tooly.tn?subject=Order%20Inquiry%20-%20${order.orderNumber}`}
-              className="text-tooly-red hover:underline font-semibold"
-            >
-              استفسار حول هذا الطلب
-            </a>
-          </div>
-        </Card>
+            {/* Items Table */}
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted mb-3">العناصر المضمنة:</h3>
+              <div className="divide-y divide-line border-y border-line text-xs">
+                {order.items.map((item: any) => (
+                  <div key={item.id} className="py-3 flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-ink">{item.productTitle}</span>
+                      <span className="text-muted ms-2">({item.planDuration}) × {item.quantity}</span>
+                    </div>
+                    <span className="font-mono font-bold text-ink">{item.unitPrice * item.quantity} د.ت</span>
+                  </div>
+                ))}
+              </div>
+              <div className="pt-3 flex justify-between text-sm font-extrabold text-ink">
+                <span>المجموع الكلي:</span>
+                <span className="text-tooly-red font-mono">{order.totalAmount} د.ت</span>
+              </div>
+            </div>
+
+            {/* Fulfillment Status & Instructions */}
+            {order.fulfillment && (
+              <div className="bg-paper p-4 rounded-control border border-line text-xs space-y-2">
+                <div className="flex items-center gap-2 font-bold text-ink">
+                  <Clock className="w-4 h-4 text-tooly-red" />
+                  <span>حالة التسليم الفعلي:</span>
+                  <span className="font-medium text-muted">{order.fulfillment.status}</span>
+                </div>
+                {order.fulfillment.instructions && (
+                  <p className="text-muted leading-relaxed pt-1 border-t border-line">
+                    <strong>توجيهات الدعم: </strong>
+                    {order.fulfillment.instructions}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-line flex items-center justify-between text-xs text-muted">
+              <span>تاريخ إنشاء الطلب: {new Date(order.createdAt).toLocaleString('fr-TN')}</span>
+              <a
+                href={`mailto:support@tooly.tn?subject=Order%20Inquiry%20-%20${order.orderNumber}`}
+                className="text-tooly-red hover:underline font-semibold"
+              >
+                استفسار حول هذا الطلب
+              </a>
+            </div>
+          </Card>
+        </div>
       )}
     </main>
   );

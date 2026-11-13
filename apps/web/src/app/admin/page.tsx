@@ -112,18 +112,21 @@ export default function AdminOverviewPage() {
           </div>
         </Card>
 
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-muted uppercase">التصنيفات المعتمدة</span>
-            <div className="w-8 h-8 rounded-control bg-sky-50 text-sky-700 flex items-center justify-center">
-              <Layers className="w-4 h-4" />
+        <Link href="/admin/categories" className="block transition-transform hover:-translate-y-0.5">
+          <Card className="p-5 h-full hover:border-tooly-red/40 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-muted uppercase">التصنيفات المعتمدة</span>
+              <div className="w-8 h-8 rounded-control bg-sky-50 text-sky-700 flex items-center justify-center">
+                <Layers className="w-4 h-4" />
+              </div>
             </div>
-          </div>
-          <div className="text-3xl font-black text-ink mb-1">{metrics.totalCategories}</div>
-          <div className="text-[11px] text-muted">
-            ذكاء اصطناعي، تصميم، فيديو، برمجة
-          </div>
-        </Card>
+            <div className="text-3xl font-black text-ink mb-1">{metrics.totalCategories}</div>
+            <div className="text-[11px] text-sky-700 font-semibold flex items-center justify-between">
+              <span>إدارة التصنيفات واللغات</span>
+              <span className="text-xs">←</span>
+            </div>
+          </Card>
+        </Link>
 
         <Card className="p-5">
           <div className="flex items-center justify-between mb-3">

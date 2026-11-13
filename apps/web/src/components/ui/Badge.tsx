@@ -16,15 +16,15 @@ export function Badge({
 
   const variants = {
     default: 'bg-paper text-ink border border-line',
-    demo: 'bg-amber-50 text-amber-900 border border-amber-200/80',
-    success: 'bg-emerald-50 text-emerald-800 border border-emerald-200',
-    warning: 'bg-amber-50 text-amber-800 border border-amber-200',
+    demo: 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/25',
+    success: 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-500/25',
+    warning: 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/25',
     accent: 'bg-tooly-soft-red text-tooly-red border border-tooly-red/20 font-semibold',
     outline: 'border border-line text-muted',
   };
 
   const sizes = {
-    sm: 'text-[11px] px-2 py-0.5 gap-1',
+    sm: 'text-[9px] px-2 py-0.5 gap-1',
     md: 'text-xs px-2.5 py-1 gap-1.5',
   };
 

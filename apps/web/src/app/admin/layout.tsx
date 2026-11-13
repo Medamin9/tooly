@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
+  Layers,
   PlusCircle,
   ShoppingBag,
   History,
@@ -15,6 +16,7 @@ import {
   Menu,
   X,
   ExternalLink,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { getProfileApi, logoutApi, AuthUser } from '@/lib/api/auth';
 import { Button } from '@/components/ui/Button';
@@ -74,8 +76,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navLinks = [
     { href: '/admin', label: 'لوحة التحكم', icon: LayoutDashboard },
     { href: '/admin/orders', label: 'إدارة الطلبات والتسليم', icon: ShoppingBag },
+    { href: '/admin/categories', label: 'إدارة التصنيفات', icon: Layers },
     { href: '/admin/products', label: 'إدارة المنتجات والأسعار', icon: Package },
     { href: '/admin/products/new', label: 'إضافة منتج جديد', icon: PlusCircle },
+    { href: '/admin/options', label: 'المدد وطرق التسليم', icon: SlidersHorizontal },
     { href: '/admin/audit', label: 'سجل التدقيق والأمان', icon: History },
   ];
 

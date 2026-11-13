@@ -6,11 +6,117 @@ import {
   ProductResponseDto,
   PlanVariantResponseDto,
 } from './dto/product-response.dto';
-import { Prisma } from '@prisma/client';
+import { CatalogOptionKind, Prisma } from '@prisma/client';
+import { resolveLocalizedList } from '../common/localized-json.util';
+import {
+  buildDefaultDeliveryMap,
+  buildDefaultDurationMap,
+  DEFAULT_DELIVERY_OPTIONS,
+  DEFAULT_DURATION_OPTIONS,
+  LocalizedOptionLabels,
+} from '../common/catalog-options.constants';
 
 @Injectable()
 export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private async loadOptionLabelMaps(): Promise<{
+    deliveryMap: Map<string, LocalizedOptionLabels>;
+    durationMap: Map<string, LocalizedOptionLabels>;
+  }> {
+    const deliveryMap = buildDefaultDeliveryMap();
+    const durationMap = buildDefaultDurationMap();
+
+    const rows = this.prisma.catalogOption?.findMany
+      ? await this.prisma.catalogOption.findMany({
+          orderBy: [{ sortOrder: 'asc' }, { code: 'asc' }],
+        })
+      : [];
+
+    for (const row of rows) {
+      const label: LocalizedOptionLabels = {
+        ar: row.labelAr,
+        fr: row.labelFr,
+        en: row.labelEn,
+      };
+      if (row.kind === CatalogOptionKind.DELIVERY_METHOD) {
+        deliveryMap.set(row.code, label);
+      } else if (row.kind === CatalogOptionKind.DURATION) {
+        durationMap.set(row.code, label);
+      }
+    }
+
+    return { deliveryMap, durationMap };
+  }
+
+  private resolveOptionLabels(
+    map: Map<string, LocalizedOptionLabels>,
+    code: string,
+  ): LocalizedOptionLabels {
+    const matched = map.get(code);
+    if (matched) {
+      return matched;
+    }
+    const readable = code.replace(/_/g, ' ');
+    return { ar: readable, fr: readable, en: readable };
+  }
+
+  async getPublicCatalogOptions(locale: 'ar' | 'fr' | 'en' = 'ar') {
+    const rows = this.prisma.catalogOption?.findMany
+      ? await this.prisma.catalogOption.findMany({
+          orderBy: [{ kind: 'asc' }, { sortOrder: 'asc' }, { code: 'asc' }],
+        })
+      : [];
+
+    const deliveryRows = rows.filter(
+      (r) => r.kind === CatalogOptionKind.DELIVERY_METHOD,
+    );
+    const durationRows = rows.filter(
+      (r) => r.kind === CatalogOptionKind.DURATION,
+    );
+
+    const deliveryMethods =
+      rows.length > 0
+        ? deliveryRows.map((r) => ({
+            id: r.id,
+            kind: r.kind,
+            code: r.code,
+            label:
+              locale === 'fr' ? r.labelFr : locale === 'en' ? r.labelEn : r.labelAr,
+            labels: { ar: r.labelAr, fr: r.labelFr, en: r.labelEn },
+            sortOrder: r.sortOrder,
+          }))
+        : DEFAULT_DELIVERY_OPTIONS.map((o) => ({
+            id: o.code,
+            kind: CatalogOptionKind.DELIVERY_METHOD,
+            code: o.code,
+            label: o.label[locale],
+            labels: o.label,
+            sortOrder: o.sortOrder,
+          }));
+
+    const durations =
+      rows.length > 0
+        ? durationRows.map((r) => ({
+            id: r.id,
+            kind: r.kind,
+            code: r.code,
+            label:
+              locale === 'fr' ? r.labelFr : locale === 'en' ? r.labelEn : r.labelAr,
+            labels: { ar: r.labelAr, fr: r.labelFr, en: r.labelEn },
+            sortOrder: r.sortOrder,
+          }))
+        : DEFAULT_DURATION_OPTIONS.map((o) => ({
+            id: o.code,
+            kind: CatalogOptionKind.DURATION,
+            code: o.code,
+            label: o.label[locale],
+            labels: o.label,
+            sortOrder: o.sortOrder,
+          }));
+
+    return { deliveryMethods, durations };
+  }
 
   async getProducts(query: GetProductsQueryDto): Promise<PaginatedProductsResponseDto> {
     const {
@@ -78,7 +184,7 @@ export class CatalogService {
     const productIds = products.map((p) => p.id);
     const categoryIds = products.map((p) => p.category.id);
 
-    const [productTranslations, categoryTranslations] = await Promise.all([
+    const [productTranslations, categoryTranslations, optionMaps] = await Promise.all([
       this.prisma.localizedContent.findMany({
         where: {
           entityType: 'product',
@@ -93,6 +199,7 @@ export class CatalogService {
           locale,
         },
       }),
+      this.loadOptionLabelMaps(),
     ]);
 
     const productTransMap = new Map(productTranslations.map((t) => [t.entityId, t]));
@@ -106,12 +213,13 @@ export class CatalogService {
         id: v.id,
         slug: v.slug,
         duration: v.duration,
+        durationLabels: this.resolveOptionLabels(optionMaps.durationMap, v.duration),
         price: Number(v.price),
         currency: v.currency,
         isAvailable: v.isAvailable,
         isDemo: v.isDemo,
-        features: (v.features as string[]) || [],
-        restrictions: (v.restrictions as string[]) || [],
+        features: resolveLocalizedList(v.features, locale),
+        restrictions: resolveLocalizedList(v.restrictions, locale),
       }));
 
       return {
@@ -124,6 +232,10 @@ export class CatalogService {
         categorySlug: product.category.slug,
         categoryName: catTrans?.name || product.category.slug,
         deliveryMethod: product.deliveryMethod,
+        deliveryMethodLabels: this.resolveOptionLabels(
+          optionMaps.deliveryMap,
+          product.deliveryMethod,
+        ),
         isPublished: product.isPublished,
         isDemo: product.isDemo,
         iconUrl: product.iconUrl,
@@ -163,7 +275,7 @@ export class CatalogService {
       throw new NotFoundException(`Product with slug "${slug}" not found or not published.`);
     }
 
-    const [productTrans, categoryTrans] = await Promise.all([
+    const [productTrans, categoryTrans, optionMaps] = await Promise.all([
       this.prisma.localizedContent.findUnique({
         where: {
           entityType_entityId_locale: {
@@ -182,18 +294,20 @@ export class CatalogService {
           },
         },
       }),
+      this.loadOptionLabelMaps(),
     ]);
 
     const variants: PlanVariantResponseDto[] = product.variants.map((v) => ({
       id: v.id,
       slug: v.slug,
       duration: v.duration,
+      durationLabels: this.resolveOptionLabels(optionMaps.durationMap, v.duration),
       price: Number(v.price),
       currency: v.currency,
       isAvailable: v.isAvailable,
       isDemo: v.isDemo,
-      features: (v.features as string[]) || [],
-      restrictions: (v.restrictions as string[]) || [],
+      features: resolveLocalizedList(v.features, locale),
+      restrictions: resolveLocalizedList(v.restrictions, locale),
     }));
 
     return {
@@ -206,6 +320,10 @@ export class CatalogService {
       categorySlug: product.category.slug,
       categoryName: categoryTrans?.name || product.category.slug,
       deliveryMethod: product.deliveryMethod,
+      deliveryMethodLabels: this.resolveOptionLabels(
+        optionMaps.deliveryMap,
+        product.deliveryMethod,
+      ),
       isPublished: product.isPublished,
       isDemo: product.isDemo,
       iconUrl: product.iconUrl,

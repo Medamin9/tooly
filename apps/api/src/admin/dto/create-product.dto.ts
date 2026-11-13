@@ -1,16 +1,22 @@
 import {
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   Min,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
-import { DeliveryMethod } from '@prisma/client';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsLocalizedStringList,
+  LocalizedStringList,
+} from '../../common/localized-json.util';
 
 export class LocalizedFieldDto {
   @ApiProperty({ example: 'Claude 3.5 Pro' })
@@ -33,6 +39,9 @@ export class CreatePlanVariantDto {
   @ApiProperty({ example: 'claude-pro-1m' })
   @IsString()
   @IsNotEmpty()
+  @Matches(/^[a-z0-9_-]+$/i, {
+    message: 'Variant slug must contain only alphanumeric characters, hyphens, and underscores',
+  })
   slug!: string;
 
   @ApiProperty({ example: '1_month' })
@@ -41,6 +50,7 @@ export class CreatePlanVariantDto {
   duration!: string;
 
   @ApiProperty({ example: 79.0, description: 'Price in TND' })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   price!: number;
@@ -50,19 +60,33 @@ export class CreatePlanVariantDto {
   @IsOptional()
   isAvailable?: boolean = true;
 
-  @ApiProperty({ example: ['Full access to Claude 3.5'] })
+  @ApiPropertyOptional({ default: false })
+  @IsBoolean()
   @IsOptional()
-  features?: string[];
+  isDemo?: boolean = false;
 
-  @ApiProperty({ example: ['Single user access'] })
+  @ApiPropertyOptional({
+    example: { ar: ['وصول كامل'], fr: ['Accès complet'], en: ['Full access'] },
+  })
   @IsOptional()
-  restrictions?: string[];
+  @IsLocalizedStringList()
+  features?: string[] | LocalizedStringList;
+
+  @ApiPropertyOptional({
+    example: { ar: ['مستخدم واحد'], fr: ['Un utilisateur'], en: ['Single user'] },
+  })
+  @IsOptional()
+  @IsLocalizedStringList()
+  restrictions?: string[] | LocalizedStringList;
 }
 
 export class CreateProductDto {
   @ApiProperty({ example: 'claude-pro' })
   @IsString()
   @IsNotEmpty()
+  @Matches(/^[a-z0-9-]+$/, {
+    message: 'Product slug must contain only lowercase alphanumeric characters and hyphens',
+  })
   slug!: string;
 
   @ApiProperty({ example: 'ai' })
@@ -75,20 +99,42 @@ export class CreateProductDto {
   @IsNotEmpty()
   provider!: string;
 
-  @ApiProperty({ enum: DeliveryMethod, default: DeliveryMethod.OFFLINE_TRANSFER })
-  @IsEnum(DeliveryMethod)
+  @ApiProperty({ example: 'OFFLINE_TRANSFER', default: 'OFFLINE_TRANSFER' })
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^[a-zA-Z0-9_-]+$/, {
+    message: 'deliveryMethod must be a valid option code (alphanumeric, -, _)',
+  })
   @IsOptional()
-  deliveryMethod?: DeliveryMethod = DeliveryMethod.OFFLINE_TRANSFER;
+  deliveryMethod?: string = 'OFFLINE_TRANSFER';
 
   @ApiProperty({ default: true })
   @IsBoolean()
   @IsOptional()
   isPublished?: boolean = true;
 
+  @ApiPropertyOptional({ default: false })
+  @IsBoolean()
+  @IsOptional()
+  isDemo?: boolean = false;
+
   @ApiProperty({ default: 0 })
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   sortOrder?: number = 0;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    example: '/uploads/products/prod-uuid.png',
+    description: 'Product logo or icon URL',
+  })
+  @IsString()
+  @IsOptional()
+  @Matches(/^$|^(?!.*\.\.)(\/(uploads|images)\/[a-zA-Z0-9._\/-]+|https?:\/\/[^\s]+)$/, {
+    message: 'iconUrl must be a safe upload path, local image path, or http(s) URL',
+  })
+  iconUrl?: string | null;
 
   @ApiProperty()
   @ValidateNested()
@@ -106,6 +152,8 @@ export class CreateProductDto {
   description!: LocalizedFieldDto;
 
   @ApiProperty({ type: [CreatePlanVariantDto] })
+  @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => CreatePlanVariantDto)
   variants!: CreatePlanVariantDto[];

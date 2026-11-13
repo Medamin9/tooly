@@ -12,11 +12,14 @@
   },
   "dependencies": {
     "@tooly/contracts": "*",
+    "@types/three": "^0.187.0",
     "gsap": "^3.15.0",
     "lucide-react": "^0.475.0",
+    "motion": "^14.9.1",
     "next": "^15.2.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "three": "^0.187.0"
   },
   "devDependencies": {
     "@tooly/config": "*",

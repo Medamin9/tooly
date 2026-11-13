@@ -25,19 +25,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
-        'bg-tooly-red text-surface hover:bg-tooly-red-dark shadow-sm hover:shadow active:bg-tooly-red-dark',
+        'bg-tooly-red text-white hover:bg-tooly-red-dark shadow-sm hover:shadow active:bg-tooly-red-dark',
       secondary:
-        'bg-ink text-surface hover:bg-ink-light active:bg-ink',
+        'bg-ink text-paper hover:bg-ink-light active:bg-ink',
       outline:
         'border border-line bg-surface text-ink hover:bg-paper hover:border-muted active:bg-paper-dark',
       ghost:
         'text-ink hover:bg-paper active:bg-paper-dark',
       destructive:
-        'bg-danger text-surface hover:bg-red-700 active:bg-red-800',
+        'bg-danger text-white hover:bg-red-700 active:bg-red-800',
     };
 
     const sizes = {
-      sm: 'text-xs px-3 py-1.5 gap-1.5',
+      sm: 'text-xs px-3 py-2 gap-1.5 rounded-[6px]',
       md: 'text-sm px-4 py-2.5 gap-2',
       lg: 'text-base px-6 py-3.5 gap-2.5',
     };

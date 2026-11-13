@@ -30,14 +30,19 @@ export class CategoriesService {
       },
     });
 
-    const transMap = new Map(translations.map((t) => [t.entityId, t.name]));
+    const transMap = new Map(translations.map((t) => [t.entityId, t]));
 
-    return categories.map((cat) => ({
-      id: cat.id,
-      slug: cat.slug,
-      name: transMap.get(cat.id) || cat.slug,
-      sortOrder: cat.sortOrder,
-      productsCount: cat._count.products,
-    }));
+    return categories.map((cat) => {
+      const trans = transMap.get(cat.id);
+      return {
+        id: cat.id,
+        slug: cat.slug,
+        name: trans?.name || cat.slug,
+        description: trans?.description || null,
+        sortOrder: cat.sortOrder,
+        productsCount: cat._count.products,
+        imageUrl: cat.imageUrl || null,
+      };
+    });
   }
 }

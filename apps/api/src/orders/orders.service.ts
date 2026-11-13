@@ -31,7 +31,9 @@ export class OrdersService {
       customerNotes: order.customerNotes,
       customer: {
         id: order.user.id,
-        email: order.user.email,
+        email: order.user.email.endsWith('@customer.tooly.tn')
+          ? ''
+          : order.user.email,
         name: order.user.name,
         phone: order.user.phone,
       },
@@ -65,7 +67,12 @@ export class OrdersService {
       throw new BadRequestException('Order must contain at least one plan variant item.');
     }
 
-    const email = dto.email.toLowerCase().trim();
+    const cleanPhone = dto.phone ? dto.phone.trim() : '';
+    const digitsOnly = cleanPhone.replace(/[^0-9]/g, '');
+    const hasEmail = typeof dto.email === 'string' && dto.email.trim().length > 0;
+    const email = hasEmail
+      ? dto.email!.toLowerCase().trim()
+      : `guest_${digitsOnly || Date.now()}@customer.tooly.tn`;
 
     // 1. Fetch requested plan variants from DB to guarantee authoritative prices
     const variantIds = dto.items.map((i) => i.planVariantId);
@@ -122,17 +129,38 @@ export class OrdersService {
     const totalAmount = new Prisma.Decimal(totalCents);
 
     // 3. Find or create customer account
-    let user = await this.prisma.user.findUnique({ where: { email } });
+    let user = null;
+    if (hasEmail) {
+      user = await this.prisma.user.findUnique({ where: { email } });
+    }
+    if (!user && cleanPhone) {
+      user = await this.prisma.user.findFirst({
+        where: {
+          OR: [
+            { phone: cleanPhone },
+            { phone: digitsOnly },
+          ],
+        },
+      });
+    }
+
     if (!user) {
       user = await this.prisma.user.create({
         data: {
           email,
-          name: dto.name,
-          phone: dto.phone || null,
+          name: dto.name.trim(),
+          phone: cleanPhone || null,
           passwordHash: '$offline$order_customer_placeholder',
           role: Role.CUSTOMER,
         },
       });
+    } else {
+      if (!user.phone && cleanPhone) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: { phone: cleanPhone },
+        });
+      }
     }
 
     // 4. Generate unique human-friendly order number
@@ -202,11 +230,11 @@ export class OrdersService {
   }
 
   /**
-   * Customer order lookup by orderNumber and email
+   * Customer order lookup by orderNumber and email or phone
    */
-  async lookupOrder(orderNumber: string, email: string): Promise<OrderResponseDto> {
+  async lookupOrder(orderNumber: string, emailOrContact: string): Promise<OrderResponseDto> {
     const order = await this.prisma.order.findUnique({
-      where: { orderNumber },
+      where: { orderNumber: orderNumber.trim() },
       include: {
         user: true,
         items: true,
@@ -218,8 +246,19 @@ export class OrdersService {
       throw new NotFoundException(`Order with number "${orderNumber}" not found.`);
     }
 
-    if (order.user.email.toLowerCase() !== email.toLowerCase().trim()) {
-      throw new ForbiddenException('The provided email does not match this order.');
+    const contact = (emailOrContact || '').toLowerCase().trim();
+    const cleanContactDigits = contact.replace(/[^0-9]/g, '');
+    const userEmail = (order.user.email || '').toLowerCase().trim();
+    const userPhoneDigits = (order.user.phone || '').replace(/[^0-9]/g, '');
+
+    const emailMatches = contact.length > 0 && userEmail === contact;
+    const phoneMatches =
+      cleanContactDigits.length >= 8 &&
+      userPhoneDigits.length >= 8 &&
+      (userPhoneDigits.includes(cleanContactDigits) || cleanContactDigits.includes(userPhoneDigits));
+
+    if (!emailMatches && !phoneMatches) {
+      throw new ForbiddenException('The provided contact does not match this order.');
     }
 
     return this.formatOrder(order);
