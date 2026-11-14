@@ -21,11 +21,14 @@ git pull
 echo ">>> 2/5 Installing updated dependencies..."
 npm install --no-audit
 
-echo ">>> 3/5 Running database migrations..."
+echo ">>> 3/5 Building shared packages (@tooly/contracts)..."
+npm run build:packages || (cd "${APP_DIR}/packages/contracts" && npx tsc)
+
+echo ">>> 4/5 Running database migrations..."
 npx prisma generate --schema=apps/api/prisma/schema.prisma
 npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
 
-echo ">>> 4/5 Building production packages & applications..."
+echo ">>> 5/5 Building production packages & applications..."
 npm run build:api
 npm run build:web
 

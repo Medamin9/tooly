@@ -130,6 +130,7 @@ PAYMENT_FULFILLMENT_MODE=offline_transfer
 ### 4.3 Build & Database Migration
 ```bash
 npm install
+npm run build:packages
 npx prisma generate --schema=apps/api/prisma/schema.prisma
 npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
 npm --prefix apps/api run prisma:seed

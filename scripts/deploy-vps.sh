@@ -254,6 +254,10 @@ log_step "4/8: Monorepo Dependencies & Build"
 log_info "Installing dependencies via npm..."
 npm install --no-audit
 
+# Build shared packages (@tooly/contracts) FIRST
+log_info "Building shared packages (@tooly/contracts)..."
+npm run build:packages || (cd "${APP_DIR}/packages/contracts" && npx tsc)
+
 # Generate Prisma Client
 log_info "Generating Prisma Client from schema..."
 npx prisma generate --schema=apps/api/prisma/schema.prisma
@@ -261,6 +265,9 @@ npx prisma generate --schema=apps/api/prisma/schema.prisma
 # Run database migrations
 log_info "Applying database migrations..."
 npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
+
+# Ensure column safety for categories.imageUrl
+sudo -u postgres psql -d "${DB_NAME}" -c 'ALTER TABLE "categories" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;' 2>/dev/null || true
 
 # Seed demo data if database is fresh
 log_info "Seeding initial catalog and categories..."
