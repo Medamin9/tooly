@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
+import { MetaPixel } from '@/components/analytics/MetaPixel';
 
 export const metadata: Metadata = {
   title: 'Tooly.tn — سوق الاشتراكات الرقمية في تونس | Digital Marketplace',
@@ -64,6 +65,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-paper text-ink selection:bg-tooly-soft-red selection:text-tooly-red font-sans">
+        <MetaPixel />
         <ThemeProvider>
           {children}
         </ThemeProvider>

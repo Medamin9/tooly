@@ -41,6 +41,13 @@ enum CatalogOptionKind {
   DURATION
 }
 
+enum ContactStatus {
+  UNREAD
+  READ
+  ARCHIVED
+  REPLIED
+}
+
 model CatalogOption {
   id        String            @id @default(uuid())
   kind      CatalogOptionKind
@@ -208,4 +215,37 @@ model AuditLog {
 
   @@index([action, createdAt])
   @@map("audit_logs")
+}
+
+model ContactMessage {
+  id        String        @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String        @db.Text
+  status    ContactStatus @default(UNREAD)
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([status, createdAt])
+  @@map("contact_messages")
+}
+
+model PageView {
+  id        String   @id @default(uuid())
+  path      String
+  locale    String?  @default("ar")
+  visitorId String?
+  ipHash    String?
+  userAgent String?
+  referrer  String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path])
+  @@index([visitorId])
+  @@map("page_views")
 }

@@ -81,6 +81,14 @@ export function Footer({ locale, className }: FooterProps) {
               {dict.nav.faq}
             </a>
           </li>
+          <li>
+            <Link
+              href={`/${locale}/contact`}
+              className="hover:text-white transition-colors inline-block py-0.5"
+            >
+              {dict.nav.contact}
+            </Link>
+          </li>
           <li className="pt-1">
             <Link
               href={`/${locale}/order/lookup`}

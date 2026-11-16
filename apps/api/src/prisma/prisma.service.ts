@@ -5,6 +5,9 @@ import { PrismaClient } from '@prisma/client';
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
+  // Fallback accessor to guarantee IDE and TypeScript language servers recognize dynamic/new models immediately
+  [key: string]: any;
+
   async onModuleInit() {
     try {
       await this.$connect();

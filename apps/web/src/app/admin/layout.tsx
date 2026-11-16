@@ -17,6 +17,7 @@ import {
   X,
   ExternalLink,
   SlidersHorizontal,
+  Mail,
 } from 'lucide-react';
 import { getProfileApi, logoutApi, AuthUser } from '@/lib/api/auth';
 import { Button } from '@/components/ui/Button';
@@ -76,6 +77,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navLinks = [
     { href: '/admin', label: 'لوحة التحكم', icon: LayoutDashboard },
     { href: '/admin/orders', label: 'إدارة الطلبات والتسليم', icon: ShoppingBag },
+    { href: '/admin/contacts', label: 'رسائل الاتصال والتواصل', icon: Mail },
     { href: '/admin/categories', label: 'إدارة التصنيفات', icon: Layers },
     { href: '/admin/products', label: 'إدارة المنتجات والأسعار', icon: Package },
     { href: '/admin/products/new', label: 'إضافة منتج جديد', icon: PlusCircle },

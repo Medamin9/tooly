@@ -3,7 +3,7 @@ import { DEMO_PLANS } from '../catalog/data';
 import { dictionaries } from '../i18n/dictionaries';
 import { getCategoryFallbackImage } from '../media/category-image';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 export type LocalizedOptionLabels = Record<Locale, string>;
 

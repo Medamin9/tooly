@@ -11,6 +11,8 @@ import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 import { OrdersModule } from './orders/orders.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { ContactsModule } from './contacts/contacts.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { UploadsModule } from './uploads/uploads.module';
     AdminModule,
     OrdersModule,
     UploadsModule,
+    ContactsModule,
+    AnalyticsModule,
   ],
 })
 export class AppModule { }

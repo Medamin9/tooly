@@ -561,7 +561,7 @@ export function DriftWall({
       onBlur: release,
     };
 
-    const targetUrl = item.href || `/${locale}/catalog/${item.slug}`;
+    const targetUrl = item.href || `/${locale}/product/${item.slug}`;
 
     return (
       <Link

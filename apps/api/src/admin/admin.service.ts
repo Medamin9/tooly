@@ -26,15 +26,89 @@ export class AdminService {
   ) {}
 
   async getOverview() {
-    const [totalProducts, publishedProducts, totalVariants, totalCategories, totalUsers, recentAuditLogs] =
-      await Promise.all([
-        this.prisma.product.count(),
-        this.prisma.product.count({ where: { isPublished: true } }),
-        this.prisma.planVariant.count(),
-        this.prisma.category.count(),
-        this.prisma.user.count(),
-        this.auditService.getRecentLogs(10),
-      ]);
+    const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setUTCHours(0, 0, 0, 0);
+
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    sevenDaysAgo.setUTCHours(0, 0, 0, 0);
+
+    const [
+      totalProducts,
+      publishedProducts,
+      totalVariants,
+      totalCategories,
+      totalUsers,
+      recentAuditLogs,
+      totalVisits,
+      todayVisits,
+      weeklyVisits,
+      uniqueVisitorGroups,
+      topPathGroups,
+      recentViews,
+    ] = await Promise.all([
+      this.prisma.product.count(),
+      this.prisma.product.count({ where: { isPublished: true } }),
+      this.prisma.planVariant.count(),
+      this.prisma.category.count(),
+      this.prisma.user.count(),
+      this.auditService.getRecentLogs(10),
+      this.prisma.pageView.count(),
+      this.prisma.pageView.count({ where: { createdAt: { gte: todayStart } } }),
+      this.prisma.pageView.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
+      this.prisma.pageView.groupBy({
+        by: ['visitorId'],
+        where: { visitorId: { not: null } },
+      }),
+      this.prisma.pageView.groupBy({
+        by: ['path'],
+        _count: { path: true },
+        orderBy: { _count: { path: 'desc' } },
+        take: 5,
+      }),
+      this.prisma.pageView.findMany({
+        where: { createdAt: { gte: sevenDaysAgo } },
+        select: { createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+
+    // Unique visitors count
+    const uniqueVisitors = uniqueVisitorGroups.length > 0
+      ? uniqueVisitorGroups.length
+      : totalVisits > 0 ? 1 : 0;
+
+    // Daily trend for past 7 days
+    const daysMap: Record<string, number> = {};
+    const dayNamesAr = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const isoDate = d.toISOString().split('T')[0];
+      daysMap[isoDate] = 0;
+    }
+
+    recentViews.forEach((view) => {
+      const iso = view.createdAt.toISOString().split('T')[0];
+      if (daysMap[iso] !== undefined) {
+        daysMap[iso]++;
+      }
+    });
+
+    const dailyTrend = Object.entries(daysMap).map(([dateStr, count]) => {
+      const d = new Date(dateStr + 'T12:00:00Z');
+      const label = dayNamesAr[d.getUTCDay()];
+      return {
+        date: dateStr,
+        label,
+        count,
+      };
+    });
+
+    const topPages = topPathGroups.map((g) => ({
+      path: g.path,
+      count: g._count.path,
+    }));
 
     return {
       metrics: {
@@ -44,6 +118,12 @@ export class AdminService {
         totalVariants,
         totalCategories,
         totalUsers,
+        totalVisits,
+        todayVisits,
+        weeklyVisits,
+        uniqueVisitors,
+        dailyTrend,
+        topPages,
       },
       recentAuditLogs,
     };

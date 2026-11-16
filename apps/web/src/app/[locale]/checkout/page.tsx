@@ -29,6 +29,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { OrderTicketCard } from '@/components/order/OrderTicketCard';
 import { PageLoader } from '@/components/ui/PageLoader';
+import { trackMetaEvent } from '@/components/analytics/MetaPixel';
 
 export default function CheckoutPage({
   params,
@@ -111,6 +112,16 @@ function CheckoutInner({
     selectedPlan.variants.find((v) => v.isAvailable) ||
     selectedPlan.variants[0];
 
+  useEffect(() => {
+    if (selectedPlan) {
+      trackMetaEvent('InitiateCheckout', {
+        content_name: selectedPlan.name,
+        value: activeVariant?.priceTND ?? selectedPlan.priceTND,
+        currency: 'TND',
+      });
+    }
+  }, [selectedPlanSlug, selectedVariantId]);
+
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -143,6 +154,12 @@ function CheckoutInner({
       });
 
       setConfirmedOrder(result);
+      trackMetaEvent('Purchase', {
+        content_name: selectedPlan.name,
+        value: result.totalAmount,
+        currency: 'TND',
+        order_id: result.orderNumber,
+      });
       // Redirect to the page containing order data and tear ticket
       const lookupIdentifier = result.customer.email || result.customer.phone || form.phone.trim();
       router.push(

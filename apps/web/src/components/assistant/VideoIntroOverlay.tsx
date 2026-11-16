@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { Volume2, VolumeX, X, Sparkles, MessageSquare, Radio } from 'lucide-react';
 
 export interface VideoIntroOverlayProps {
@@ -66,8 +67,16 @@ export function VideoIntroOverlay({
   currentLocale,
 }: VideoIntroOverlayProps) {
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+  const isHomePage =
+    pathname === `/${currentLocale}` ||
+    pathname === `/${currentLocale}/` ||
+    pathname === '/' ||
+    pathname === '';
+
   // Stages: 'overlay' | 'morphing' | 'avatar'
-  const [stage, setStage] = useState<'overlay' | 'morphing' | 'avatar'>('overlay');
+  // Default to 'avatar' so inner pages (e.g. /order/lookup, /checkout) never have interactive inputs blocked
+  const [stage, setStage] = useState<'overlay' | 'morphing' | 'avatar'>('avatar');
   const [isVideoMuted, setIsVideoMuted] = useState(true);
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [showSpeechBubble, setShowSpeechBubble] = useState(false);
@@ -77,7 +86,7 @@ export function VideoIntroOverlay({
 
   const isAr = currentLocale === 'ar';
 
-  // Responsive screen detection for accurate morph coordinates
+  // Responsive screen detection and overlay activation strictly on homepage
   useEffect(() => {
     setMounted(true);
     const checkMobile = () => {
@@ -88,18 +97,28 @@ export function VideoIntroOverlay({
 
     try {
       const seen = sessionStorage.getItem('tooly_assistant_intro_seen');
-      if (seen) {
-        setStage('avatar');
-        setShowSpeechBubble(true);
-      } else {
+      // Only show full 3D TV overlay on the storefront homepage if the user hasn't seen it yet
+      if (!seen && isHomePage) {
         setStage('overlay');
+      } else {
+        setStage('avatar');
+        if (seen) {
+          setShowSpeechBubble(true);
+        }
       }
     } catch {
       setStage('avatar');
     }
 
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [isHomePage]);
+
+  // Immediately settle into avatar if user navigates away from the homepage
+  useEffect(() => {
+    if (!isHomePage && stage === 'overlay') {
+      setStage('avatar');
+    }
+  }, [isHomePage, stage]);
 
   // Handle replaying video if requested by parent (e.g. from chatbot replay button)
   useEffect(() => {
@@ -215,10 +234,14 @@ export function VideoIntroOverlay({
 
   return (
     <>
-      {/* 1. BACKDROP OVERLAY DURING 'overlay' */}
+      {/* 1. BACKDROP OVERLAY DURING 'overlay' (Tap anywhere outside TV to dismiss/morph) */}
       <div
+        onClick={handleStartMorph}
+        role="button"
+        tabIndex={isOverlay ? 0 : -1}
+        aria-label="Fermer l'intro vidéo"
         className={`fixed inset-0 z-40 bg-black/80 backdrop-blur-md transition-opacity duration-700 ease-out ${
-          isOverlay ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          isOverlay ? 'opacity-100 pointer-events-auto cursor-pointer' : 'opacity-0 pointer-events-none'
         }`}
       />
 

@@ -221,7 +221,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       howItWorks: 'كيف نعمل',
       trust: 'الضمان والشفافية',
       faq: 'الأسئلة المتكررة',
-      contact: 'مساعدة',
+      contact: 'اتصل بنا',
       account: 'تسجيل الدخول',
     },
     hero: {

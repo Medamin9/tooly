@@ -11,20 +11,11 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { CtaArrow } from '@/components/ui/CtaArrow';
-import { getTunisianBotResponse, BotAnswer } from './tunisianKnowledge';
+import { BotAnswer, ChatMessage, RecommendedProductCard } from './types';
+import { getTunisianBotResponse } from './tunisianKnowledge';
 import { getAssistantAIResponse } from './tunisianAIEngine';
 
-export interface ChatMessage {
-  id: string;
-  sender: 'bot' | 'user';
-  text: string;
-  timestamp: string;
-  quickReplies?: string[];
-  action?: {
-    label: string;
-    href: string;
-  };
-}
+export type { ChatMessage, RecommendedProductCard };
 
 export interface ChatWindowProps {
   isOpen: boolean;
@@ -59,29 +50,31 @@ export function ChatWindow({
         id: `welcome-${currentLocale}`,
         sender: 'bot',
         text: isAr
-          ? `عسلامة يا باهي! 👋 مرحباً بيك في **Tooly.tn** (سوق الاشتراكات الرقمية في تونس)!
+          ? `مرحبا بيك في **Tooly.tn**! 🐿️🇹🇳 (سوق الاشتراكات الرقمية في تونس)
 
-أنا المساعد التونسي الذكي متاعك. نعاونك باش تعرف أسعار الاشتراكات (Claude, ChatGPT, Canva...)، كيفاش تخلص بالـ D17 ولا Carte، ووقتاش يوصلك الطلب متاعك.
+أنا **سنجوب (Sanjoub)**، مستشارك الذكي للمنتجات الرقمية. نعاونك تختار أحسن الأدوات لاحتياجاتك (تصميم، برمجة، مونتاج فيديو، ذكاء اصطناعي، دراسة) بأرخص الأسعار بالدينار التونسي، وتخلص بالـ D17 أو Carte.
 
-شنوة تحب تعرف اليوم؟ 🇹🇳`
-          : `3aslema ya behi! 👋 Mar7ba bik fi **Tooly.tn** (سوق الاشتراكات الرقمية في تونس)!
+شنوة تخدم ولا شنوة نوع الأدوات اللي تلوج عليها؟ ✨`
+          : `Mar7ba bik fi **Tooly.tn**! 🐿️🇹🇳 (1ère Marketplace d'abonnements digitaux fi Tounes)
 
-Ena l'assistant virtuel mte3ek. N3awnek ta3ref les prix mte3 les abonnements (Claude, ChatGPT, Canva...), kifech tkhallas b D17 walla Carte, w waqtech touslek el commande.
+Ena **Sanjoub**, ton conseiller digital. N3awnek tekhtar a7sen les outils mte3ek (Design, Dev, Montage Video, IA, 9raya) b a9al les prix bel Dinar Tounsi, w tkhallas b D17 walla Carte.
 
-Chnowa t7eb na3rfou lyoum? 🇹🇳`,
+Chnowa tekhdem walla chnowa naw3 el tools elli tlawwej 3lihom? ✨`,
         timestamp: initialTime,
         quickReplies: isAr
           ? [
-            'اشتراكات الذكاء الاصطناعي (Claude, ChatGPT)',
+            'أنا ديزاينر (Design)',
+            'أنا مبرمج (Dev & Code)',
+            'صناعة ومونتاج الفيديو',
+            'طالب وأحتاج أدوات للدراسة',
             'كيفاش نخلص بالـ D17؟',
-            'وقتاش يوصلني الطلب؟',
-            'فمّا ضمان؟',
           ]
           : [
-            'Abonnements IA (Claude, ChatGPT)',
+            'Ena designer',
+            'Ena developpeur (Code)',
+            'Montage & Video',
+            'Ena etudiant',
             'Kifech nkhallas b D17?',
-            'Waqtech touselni el commande?',
-            'Thamma garantie?',
           ],
         action: {
           label: isAr ? 'تفرّج في الكتالوج' : 'Tfarrag 3al Catalogue',
@@ -153,13 +146,14 @@ Chnowa t7eb na3rfou lyoum? 🇹🇳`,
         }),
         quickReplies: botAnswer.quickReplies,
         action: botAnswer.action,
+        recommendedProducts: botAnswer.recommendedProducts,
       };
 
       setMessages((prev) => [...prev, botMsg]);
       setIsTyping(false);
     } catch {
       // Seamless fallback
-      const fallback = getTunisianBotResponse(trimmed, currentLocale);
+      const fallback = getTunisianBotResponse(trimmed, currentLocale, updatedHistory);
       const botMsg: ChatMessage = {
         id: `bot-${Date.now()}`,
         sender: 'bot',
@@ -170,6 +164,7 @@ Chnowa t7eb na3rfou lyoum? 🇹🇳`,
         }),
         quickReplies: fallback.quickReplies,
         action: fallback.action,
+        recommendedProducts: fallback.recommendedProducts,
       };
       setMessages((prev) => [...prev, botMsg]);
       setIsTyping(false);
@@ -191,19 +186,23 @@ Chnowa t7eb na3rfou lyoum? 🇹🇳`,
         id: `welcome-${Date.now()}`,
         sender: 'bot',
         text: isAr
-          ? `مرحباً بيك من جديد! 👋 تفضل اسألني على أي حاجة تحبها: الأسعار، D17، فلوسي ولا الضمان! 🇹🇳`
-          : `Mar7ba bik men jdid! 👋 TFaddal es'elni 3la ay 7aja t7ebha: les prix, D17, flouci walla el garantie! 🇹🇳`,
+          ? `مرحبا بيك من جديد مع **سنجوب**! 🐿️ تفضل اسألني على أي اشتراك تحب عليه: الديزاين، البرمجة، المونتاج، الأسعار، أو كيفاش تخلص بالـ D17 وفلوسي! 🇹🇳`
+          : `Mar7ba bik men jdid m3a **Sanjoub**! 🐿️ TFaddal es'elni 3la ay abonnement t7eb 3lih: Design, Dev, Montage, les prix walla kifech tkhallas b D17 w Flouci! 🇹🇳`,
         timestamp: initialTime,
         quickReplies: isAr
           ? [
-            'اشتراكات الذكاء الاصطناعي (Claude, ChatGPT)',
+            'أنا ديزاينر (Design)',
+            'أنا مبرمج (Dev & Code)',
+            'صناعة ومونتاج الفيديو',
+            'طالب وأحتاج أدوات للدراسة',
             'كيفاش نخلص بالـ D17؟',
-            'وقتاش يوصلني الطلب؟',
           ]
           : [
-            'Abonnements IA (Claude, ChatGPT)',
+            'Ena designer',
+            'Ena developpeur (Code)',
+            'Montage & Video',
+            'Ena etudiant',
             'Kifech nkhallas b D17?',
-            'Waqtech touselni el commande?',
           ],
       },
     ]);
@@ -239,7 +238,7 @@ Chnowa t7eb na3rfou lyoum? 🇹🇳`,
               </span>
             </div>
             <span className="text-[11px] text-muted leading-tight">
-              {isAr ? 'المساعد التونسي الذكي • متصل الآن' : 'المساعد التونسي الذكي • En ligne'}
+              {isAr ? 'المستشار الرقمي الذكي • متصل الآن' : 'Conseiller IA Tooly • En ligne'}
             </span>
           </div>
         </div>
@@ -317,6 +316,56 @@ Chnowa t7eb na3rfou lyoum? 🇹🇳`,
                   })}
                 </div>
 
+                {/* Product Recommendation Cards (if provided by Sanjoub) */}
+                {msg.recommendedProducts && msg.recommendedProducts.length > 0 && (
+                  <div className="mt-3 pt-2.5 border-t border-line/50 space-y-2">
+                    <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted">
+                      <Sparkles className="w-3 h-3 text-tooly-red" />
+                      <span>{isAr ? 'الاشتراكات المقترحة' : 'Offres recommandées'}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {msg.recommendedProducts.map((prod) => (
+                        <div
+                          key={prod.id || prod.slug}
+                          className="p-2.5 rounded-xl bg-paper/95 border border-line shadow-2xs hover:border-tooly-red/40 transition-all text-start"
+                        >
+                          <div className="flex items-start justify-between gap-1.5 mb-1">
+                            <div>
+                              <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-surface border border-line/60 text-muted font-semibold">
+                                {prod.provider}
+                              </span>
+                              <h5 className="font-bold text-xs text-ink mt-0.5">{prod.name}</h5>
+                            </div>
+                            <div className="text-end shrink-0">
+                              <span className="text-xs font-black text-tooly-red">{prod.priceTND} TND</span>
+                              <span className="text-[9px] text-muted block leading-none">/ {prod.durationLabel}</span>
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-muted line-clamp-2 mb-2 leading-relaxed">
+                            {prod.tagline}
+                          </p>
+                          <div className="flex items-center gap-1.5 pt-1 border-t border-line/40">
+                            <Link
+                              href={prod.productUrl}
+                              onClick={() => onClose()}
+                              className="flex-1 text-center py-1 px-2 rounded-lg bg-surface hover:bg-surface/80 border border-line text-[10px] font-bold text-ink transition-colors"
+                            >
+                              {isAr ? 'التفاصيل' : 'Détails'}
+                            </Link>
+                            <Link
+                              href={prod.checkoutUrl}
+                              onClick={() => onClose()}
+                              className="flex-1 text-center py-1 px-2 rounded-lg bg-tooly-red hover:bg-tooly-red/90 text-white text-[10px] font-bold transition-colors shadow-2xs"
+                            >
+                              {isAr ? 'اطلب الآن' : 'Commander'}
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Direct Action Link */}
                 {msg.action && (
                   <div className="mt-2.5 pt-2 border-t border-line/50">
@@ -363,7 +412,7 @@ Chnowa t7eb na3rfou lyoum? 🇹🇳`,
             <span className="w-1.5 h-1.5 rounded-full bg-tooly-red animate-bounce [animation-delay:0.2s]" />
             <span className="w-1.5 h-1.5 rounded-full bg-tooly-red animate-bounce [animation-delay:0.4s]" />
             <span className="text-[11px] font-medium text-muted">
-              {isAr ? 'تولي بوت يكتب الآن...' : 'Tooly Bot yekteb...'}
+              {isAr ? 'سنجوب يكتب الآن...' : 'Sanjoub yekteb...'}
             </span>
           </div>
         )}

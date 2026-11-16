@@ -216,6 +216,7 @@ PORT=3000
 NEXT_PUBLIC_APP_URL=https://${PRIMARY_DOMAIN}
 NEXT_PUBLIC_API_URL=https://${PRIMARY_DOMAIN}/api/v1
 NEXT_PUBLIC_DEFAULT_LOCALE=ar
+NEXT_PUBLIC_FACEBOOK_PIXEL_ID="6092842960776413"
 
 # API Service (NestJS REST API)
 API_PORT=4000
@@ -286,6 +287,12 @@ npx ts-node apps/api/src/scripts/bootstrap-admin.ts --email "$ADMIN_EMAIL" --pas
 # Build API backend
 log_info "Building NestJS backend API (@tooly/api)..."
 npm run build:api
+
+# Safety check: if TypeScript nested dist output, normalize it
+if [[ ! -f "${APP_DIR}/apps/api/dist/main.js" && -f "${APP_DIR}/apps/api/dist/apps/api/src/main.js" ]]; then
+    log_info "Normalizing API dist directory structure..."
+    cp -rn "${APP_DIR}/apps/api/dist/apps/api/src/"* "${APP_DIR}/apps/api/dist/" || true
+fi
 
 # Build Web frontend
 log_info "Building Next.js frontend storefront (@tooly/web)..."

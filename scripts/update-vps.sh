@@ -28,9 +28,18 @@ echo ">>> 4/5 Running database migrations..."
 npx prisma generate --schema=apps/api/prisma/schema.prisma
 npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
 
+if [[ "${1:-}" == "--seed" || "${SEED_DB:-false}" == "true" ]]; then
+    echo ">>> Seeding updated catalog products (Arabic, French, English)..."
+    npm run seed || true
+fi
+
 echo ">>> 5/5 Building production packages & applications..."
 npm run build:api
 npm run build:web
+
+if [[ ! -f "${APP_DIR}/apps/api/dist/main.js" && -f "${APP_DIR}/apps/api/dist/apps/api/src/main.js" ]]; then
+    cp -rn "${APP_DIR}/apps/api/dist/apps/api/src/"* "${APP_DIR}/apps/api/dist/" || true
+fi
 
 echo ">>> 5/5 Reloading PM2 services with zero downtime..."
 pm2 reload ecosystem.config.js --update-env

@@ -17,7 +17,8 @@
     "test:cov": "jest --coverage",
     "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
     "prisma:migrate": "prisma migrate dev --schema=./prisma/schema.prisma",
-    "prisma:seed": "prisma db seed --schema=./prisma/schema.prisma",
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "seed": "ts-node prisma/seed.ts",
     "bootstrap:admin": "ts-node src/scripts/bootstrap-admin.ts"
   },
   "prisma": {

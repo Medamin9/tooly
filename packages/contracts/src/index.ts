@@ -53,3 +53,57 @@ export interface HealthResponse {
   environment: string;
   service: string;
 }
+
+/**
+ * Contact Message Contracts
+ */
+export type ContactStatus = 'UNREAD' | 'READ' | 'ARCHIVED' | 'REPLIED';
+
+export interface CreateContactMessageInput {
+  name: string;
+  email: string;
+  phone?: string;
+  subject?: string;
+  message: string;
+}
+
+export interface ContactMessageItem {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  subject?: string | null;
+  message: string;
+  status: ContactStatus;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContactMessagesListResponse {
+  items: ContactMessageItem[];
+  total: number;
+  unreadCount: number;
+  page: number;
+  limit: number;
+}
+
+/**
+ * Analytics / Visit Contracts
+ */
+export interface RecordVisitInput {
+  path: string;
+  locale?: string;
+  visitorId?: string;
+  referrer?: string;
+}
+
+export interface VisitMetrics {
+  totalVisits: number;
+  todayVisits: number;
+  uniqueVisitors: number;
+  weeklyVisits: number;
+  dailyTrend: Array<{ date: string; label: string; count: number }>;
+  topPages: Array<{ path: string; count: number }>;
+}

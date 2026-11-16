@@ -450,8 +450,23 @@ export function CuratedCardCylinder({ plans, locale, dict }: CuratedCardCylinder
   const thicknessLayers = [-1.47, -0.73, 0, 0.73, 1.47];
 
   const currentPlan = activePlans[activeIndex] || activePlans[0];
-  const currentTheme = OFFER_THEMES[currentPlan.slug] || DEFAULT_THEME;
+  const currentTheme = currentPlan ? (OFFER_THEMES[currentPlan.slug] || DEFAULT_THEME) : DEFAULT_THEME;
   const lang: SupportedLang = (locale === 'fr' || locale === 'en') ? locale : 'ar';
+
+  const activeVariantId =
+    currentPlan && 'variants' in currentPlan && currentPlan.variants && currentPlan.variants.length > 0
+      ? (currentPlan.variants.find((v) => v.isAvailable)?.id || currentPlan.variants[0].id)
+      : undefined;
+
+  const checkoutHref = currentPlan
+    ? (activeVariantId
+        ? `/${locale}/checkout?plan=${encodeURIComponent(currentPlan.slug)}&variant=${encodeURIComponent(activeVariantId)}`
+        : `/${locale}/checkout?plan=${encodeURIComponent(currentPlan.slug)}`)
+    : `/${locale}/checkout`;
+
+  const productDetailsHref = currentPlan
+    ? `/${locale}/product/${encodeURIComponent(currentPlan.slug)}`
+    : `/${locale}/catalog`;
 
   return (
     <div className="relative w-full rounded-[32px] bg-[#000000] border border-white/10 p-4 sm:p-8 lg:p-10 shadow-2xl overflow-hidden select-none">
@@ -511,8 +526,7 @@ export function CuratedCardCylinder({ plans, locale, dict }: CuratedCardCylinder
           </div>
 
           <Link href={`/${locale}/catalog`}>
-            <Button variant="outline" size="sm" className="border-white/20 text-black/80 bg-black hover:bg-white hover:text-black">
-
+            <Button variant="outline" size="sm" className="border-white/20 text-white/90 bg-white/5 hover:bg-white hover:text-black">
               <span>{locale === 'ar' ? 'عرض الكتالوج الكامل' : locale === 'fr' ? 'Tout le catalogue' : 'View Full Catalog'}</span>
               <CtaArrow className="w-3.5 h-3.5" />
             </Button>
@@ -571,14 +585,14 @@ export function CuratedCardCylinder({ plans, locale, dict }: CuratedCardCylinder
 
             {/* Action CTA Buttons */}
             <div className="flex flex-col gap-2.5">
-              <Link href={`/${locale}/catalog/${currentPlan.slug}`} className="w-full">
+              <Link href={checkoutHref} className="w-full">
                 <Button className="w-full bg-tooly-red hover:bg-tooly-red/90 text-white font-bold py-2.5 text-xs sm:text-sm shadow-lg shadow-tooly-red/25 border-none">
                   <span>{dict.orderNow}</span>
                   <Zap className="w-3.5 h-3.5" />
                 </Button>
               </Link>
 
-              <Link href={`/${locale}/catalog/${currentPlan.slug}`} className="w-full">
+              <Link href={productDetailsHref} className="w-full">
                 <Button variant="ghost" className="w-full text-white/70 hover:text-white hover:bg-white/5 text-xs py-2">
                   <span>{dict.viewDetails}</span>
                   <ExternalLink className="w-3 h-3 rtl:rotate-180" />

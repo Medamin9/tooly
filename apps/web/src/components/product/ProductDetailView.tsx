@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { trackMetaEvent } from '@/components/analytics/MetaPixel';
 import {
   Check,
   AlertTriangle,
@@ -68,6 +69,15 @@ export function ProductDetailView({
   const displayDuration = activeVariant?.durationLabel[locale] ?? plan.durationLabel[locale];
   const displayFeatures = activeVariant?.features ?? plan.features[locale];
   const displayRestrictions = activeVariant?.restrictions ?? plan.restrictions[locale];
+
+  useEffect(() => {
+    trackMetaEvent('ViewContent', {
+      content_name: plan.name,
+      content_category: categoryLabel,
+      value: activeVariant?.priceTND ?? plan.priceTND,
+      currency: 'TND',
+    });
+  }, [plan.slug, selectedVariantId]);
 
   return (
     <main className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 text-start">

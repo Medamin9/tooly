@@ -83,6 +83,12 @@ export function Header({ locale }: { locale: Locale }) {
               >
                 {dict.nav.faq}
               </a>
+              <Link
+                href={`/${locale}/contact`}
+                className="text-muted hover:text-ink transition-colors py-1"
+              >
+                {dict.nav.contact}
+              </Link>
             </nav>
           </div>
 
@@ -177,6 +183,13 @@ export function Header({ locale }: { locale: Locale }) {
               >
                 {dict.nav.faq}
               </a>
+              <Link
+                href={`/${locale}/contact`}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 rounded-control hover:bg-paper text-muted hover:text-ink transition-colors"
+              >
+                {dict.nav.contact}
+              </Link>
               <Link
                 href={`/${locale}/order/lookup`}
                 onClick={() => setIsMobileMenuOpen(false)}

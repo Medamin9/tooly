@@ -178,7 +178,7 @@ export function FaqAccordionInteractive({ dict, locale }: FaqAccordionInteractiv
           </p>
 
           <a
-            href="https://wa.me/21600000000?text=Bonjour%20Tooly%20j'ai%20une%20question"
+            href="https://wa.me/21696707406?text=Bonjour%20Tooly%20j'ai%20une%20question"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full inline-flex items-center justify-center gap-2 font-semibold rounded-control transition-all duration-200 bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2.5 shadow-sm hover:shadow"
@@ -211,8 +211,8 @@ export function FaqAccordionInteractive({ dict, locale }: FaqAccordionInteractiv
             <div
               key={idx}
               className={`rounded-2xl transition-all duration-300 border ${isOpen
-                  ? 'bg-surface border-tooly-red/40 shadow-lg ring-1 ring-tooly-red/15'
-                  : 'bg-surface/80 hover:bg-surface border-line hover:border-line/80 shadow-xs'
+                ? 'bg-surface border-tooly-red/40 shadow-lg ring-1 ring-tooly-red/15'
+                : 'bg-surface/80 hover:bg-surface border-line hover:border-line/80 shadow-xs'
                 }`}
             >
               {/* Question Trigger Button */}
@@ -226,8 +226,8 @@ export function FaqAccordionInteractive({ dict, locale }: FaqAccordionInteractiv
                   {/* Number pill */}
                   <span
                     className={`text-xs sm:text-sm font-black px-2.5 py-1 rounded-lg transition-colors ${isOpen
-                        ? 'bg-tooly-soft-red text-tooly-red'
-                        : 'bg-paper text-muted'
+                      ? 'bg-tooly-soft-red text-tooly-red'
+                      : 'bg-paper text-muted'
                       }`}
                   >
                     <BlurText
@@ -271,8 +271,8 @@ export function FaqAccordionInteractive({ dict, locale }: FaqAccordionInteractiv
                 {/* Animated Rotating Toggle Indicator */}
                 <div
                   className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${isOpen
-                      ? 'bg-tooly-red text-white rotate-180 shadow-sm'
-                      : 'bg-paper text-muted border border-line group-hover:border-tooly-red/40'
+                    ? 'bg-tooly-red text-white rotate-180 shadow-sm'
+                    : 'bg-paper text-muted border border-line group-hover:border-tooly-red/40'
                     }`}
                 >
                   <ChevronDown className="w-4 h-4" />
