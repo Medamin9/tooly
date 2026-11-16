@@ -2,6 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as express from 'express';
+import * as path from 'path';
+import * as fs from 'fs';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -12,6 +15,19 @@ async function bootstrap() {
   const port = configService.get<number>('port') || 4000;
   const prefix = configService.get<string>('apiPrefix') || 'api/v1';
   const corsOrigin = configService.get<string>('corsOrigin') || 'http://localhost:3000';
+
+  // Direct Static File Serving for Uploaded Assets (/uploads and /api/uploads)
+  const configuredUploadsDir = configService.get<string>('uploadsDir') || process.env.UPLOADS_DIR;
+  const uploadsDir = configuredUploadsDir
+    ? path.resolve(configuredUploadsDir)
+    : fs.existsSync(path.resolve(process.cwd(), 'uploads'))
+      ? path.resolve(process.cwd(), 'uploads')
+      : fs.existsSync(path.resolve(process.cwd(), 'apps', 'api', 'uploads'))
+        ? path.resolve(process.cwd(), 'apps', 'api', 'uploads')
+        : path.resolve(__dirname, '..', 'uploads');
+
+  app.use('/uploads', express.static(uploadsDir, { maxAge: '30d' }));
+  app.use('/api/uploads', express.static(uploadsDir, { maxAge: '30d' }));
 
   // Global API Prefix
   app.setGlobalPrefix(prefix);

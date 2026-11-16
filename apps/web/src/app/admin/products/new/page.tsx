@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Sparkles, CheckCircle2, RefreshCw } from 'lucide-react';
 import {
+  autoTranslateAdminBatch,
   createAdminProduct,
   fetchAdminCatalogOptions,
   fetchAdminCategories,
@@ -60,7 +61,9 @@ function linesToArray(text: string): string[] {
 export default function NewProductPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [translationSuccess, setTranslationSuccess] = useState<string | null>(null);
   const [packLocale, setPackLocale] = useState<PackLocale>('ar');
   const [categoryChoices, setCategoryChoices] =
     useState<SelectChoice[]>(DEFAULT_CATEGORIES);
@@ -161,6 +164,78 @@ export default function NewProductPage() {
     };
   }, []);
 
+  const handleAutoTranslate = async () => {
+    if (!form.name.ar && !form.featuresText.ar) {
+      setError('يرجى إدخال اسم المنتج وميزات الباقة باللغة العربية أولاً لتوليد الترجمة.');
+      return;
+    }
+
+    setTranslating(true);
+    setError(null);
+    setTranslationSuccess(null);
+
+    try {
+      const res = await autoTranslateAdminBatch({
+        product: {
+          name: form.name.ar || '',
+          tagline: form.tagline.ar || '',
+          description: form.description.ar || '',
+        },
+        packs: [
+          {
+            index: 0,
+            featuresText: form.featuresText.ar || '',
+            restrictionsText: form.restrictionsText.ar || '',
+          },
+        ],
+        sourceLocale: 'ar',
+        targetLocales: ['fr', 'en'],
+      });
+
+      setForm((prev) => {
+        let updated = { ...prev };
+        if (res?.product) {
+          updated.name = {
+            ...updated.name,
+            fr: res.product.name.fr || updated.name.fr,
+            en: res.product.name.en || updated.name.en,
+          };
+          updated.tagline = {
+            ...updated.tagline,
+            fr: res.product.tagline.fr || updated.tagline.fr,
+            en: res.product.tagline.en || updated.tagline.en,
+          };
+          updated.description = {
+            ...updated.description,
+            fr: res.product.description.fr || updated.description.fr,
+            en: res.product.description.en || updated.description.en,
+          };
+        }
+        if (Array.isArray(res?.packs) && res.packs[0]) {
+          const packRes = res.packs[0];
+          updated.featuresText = {
+            ...updated.featuresText,
+            fr: packRes.featuresText.fr || updated.featuresText.fr,
+            en: packRes.featuresText.en || updated.featuresText.en,
+          };
+          updated.restrictionsText = {
+            ...updated.restrictionsText,
+            fr: packRes.restrictionsText.fr || updated.restrictionsText.fr,
+            en: packRes.restrictionsText.en || updated.restrictionsText.en,
+          };
+        }
+        return updated;
+      });
+
+      setTranslationSuccess('تمت ترجمة بيانات المنتج وميزات الباقة إلى الفرنسية والإنجليزية بنجاح! ✨');
+      setTimeout(() => setTranslationSuccess(null), 4000);
+    } catch (err: any) {
+      setError(err?.message || 'فشل توليد الترجمة التلقائية');
+    } finally {
+      setTranslating(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -209,7 +284,7 @@ export default function NewProductPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 text-start">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2 text-xs text-muted">
             <Link href="/admin/products" className="hover:text-ink flex items-center gap-1">
@@ -219,7 +294,31 @@ export default function NewProductPage() {
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-ink">إضافة منتج واشتراك جديد</h1>
         </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleAutoTranslate}
+          isLoading={translating}
+          className="gap-2 text-xs font-bold text-tooly-red border-tooly-red/30 hover:bg-tooly-soft-red/20 shadow-xs"
+        >
+          <Sparkles className="w-4 h-4 text-tooly-red" />
+          <span>ترجمة الحزمة والبيانات تلقائياً</span>
+        </Button>
       </div>
+
+      {translationSuccess && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-control flex items-center justify-between gap-2 shadow-sm animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="font-semibold">{translationSuccess}</span>
+          </div>
+          <span className="text-[10px] text-emerald-700 font-bold bg-white px-2 py-0.5 rounded border border-emerald-200">
+            3 لغات مكتملة (AR/FR/EN)
+          </span>
+        </div>
+      )}
 
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 text-danger text-xs rounded-control flex items-center gap-2">
@@ -454,9 +553,25 @@ export default function NewProductPage() {
 
           <div className="pt-2 space-y-3 border-t border-line">
             <div className="flex items-center justify-between flex-wrap gap-2 bg-paper px-3 py-2 rounded-control border border-line">
-              <span className="text-xs font-bold text-ink">
-                ميزات وقيود الباقة باللغات الثلاث:
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-ink">
+                  ميزات وقيود الباقة باللغات الثلاث:
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAutoTranslate}
+                  disabled={translating}
+                  title="توليد الترجمة الفرنسية والإنجليزية من الميزات والقيود العربية"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-control text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition-colors shadow-2xs"
+                >
+                  {translating ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-700" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  )}
+                  <span>ترجمة الباقة تلقائياً</span>
+                </button>
+              </div>
               <div role="tablist" className="flex items-center gap-1.5">
                 {LOCALE_TABS.map((tab) => {
                   const active = packLocale === tab.key;

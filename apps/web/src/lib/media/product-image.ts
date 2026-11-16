@@ -2,7 +2,7 @@
  * Product Icon / Logo Path Handler for Tooly.tn
  *
  * Normalizes and validates persisted product icon paths across:
- * 1. Backend-uploaded images (`/uploads/products/prod-xxx.png`) -> proxied via `/api/uploads/products/...`
+ * 1. Backend-uploaded images (`/uploads/products/prod-xxx.webp`) served directly or proxied
  * 2. Local static logo artwork (`/images/logos/...` or `/images/...`)
  * 3. Validated http(s) URLs
  * 4. Slug-based fallback logos when an image is absent or invalid
@@ -43,13 +43,14 @@ export function resolveProductIconPath(
     return getProductFallbackLogo(slug);
   }
 
+  // Handle uploaded product files (both relative and absolute origin URLs)
   const uploadMatch = raw.match(
-    /^\/(?:api\/(?:v1\/)?)?uploads\/products\/([a-zA-Z0-9._-]+)$/
+    /(?:https?:\/\/[^\/]+)?\/(?:api\/(?:v1\/)?)?uploads\/products\/([a-zA-Z0-9._-]+)$/i
   );
   if (uploadMatch) {
     const filename = uploadMatch[1];
     if (SAFE_PRODUCT_UPLOAD_REGEX.test(filename)) {
-      return `/api/uploads/products/${filename}`;
+      return `/uploads/products/${filename}`;
     }
     return getProductFallbackLogo(slug);
   }

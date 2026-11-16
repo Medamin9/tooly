@@ -17,6 +17,7 @@ import {
   BarChart3,
   Globe,
   RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 import { fetchAdminOverview } from '@/lib/api/admin';
 import { Card } from '@/components/ui/Card';
@@ -86,7 +87,7 @@ export default function AdminOverviewPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="outline"
             size="sm"
@@ -97,8 +98,14 @@ export default function AdminOverviewPage() {
             <RefreshCw className="w-3.5 h-3.5" />
             <span>تحديث</span>
           </Button>
+          <Link href="/admin/products">
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <Package className="w-4 h-4" />
+              <span>إدارة المنتجات والباقات</span>
+            </Button>
+          </Link>
           <Link href="/admin/products/new">
-            <Button variant="primary" size="sm">
+            <Button variant="primary" size="sm" className="gap-1.5">
               <PlusCircle className="w-4 h-4" />
               <span>إضافة منتج جديد</span>
             </Button>
@@ -110,6 +117,32 @@ export default function AdminOverviewPage() {
             </Button>
           </Link>
         </div>
+      </div>
+
+      {/* 1-Click Translation & Catalog Helper Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-gradient-to-r from-tooly-red/5 via-tooly-soft-red/25 to-amber-50/70 rounded-card border border-tooly-red/20 shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-control bg-tooly-red text-white flex items-center justify-center shrink-0 shadow-xs">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-ink flex items-center gap-2">
+              <span>ميزة الترجمة الآلية الفورية للباقات والمنتجات (3 لغات)</span>
+              <span className="text-[10px] bg-white text-tooly-red font-bold px-2 py-0.2 rounded-full border border-tooly-red/20">
+                مفعّلة الآن
+              </span>
+            </div>
+            <p className="text-[11px] text-muted mt-0.5">
+              يمكنك كتابة ميزات وقيود الباقة بالعربية وتوليد ترجمتها الفرنسية والإنجليزية بنقرة واحدة داخل نافذة تعديل أي منتج.
+            </p>
+          </div>
+        </div>
+        <Link href="/admin/products">
+          <Button variant="outline" size="sm" className="text-xs gap-1.5 border-tooly-red/30 text-tooly-red hover:bg-tooly-soft-red/20">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>فتح قائمة المنتجات لتعديل الباقات</span>
+          </Button>
+        </Link>
       </div>
 
       {/* Real Database Metric Cards (with Website Visits as Spotlight) */}
@@ -136,34 +169,39 @@ export default function AdminOverviewPage() {
         </Card>
 
         {/* 2. Total Products */}
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-muted uppercase">إجمالي المنتجات</span>
-            <div className="w-8 h-8 rounded-control bg-tooly-soft-red text-tooly-red flex items-center justify-center">
-              <Package className="w-4 h-4" />
+        <Link href="/admin/products" className="block transition-transform hover:-translate-y-0.5">
+          <Card className="p-5 h-full hover:border-tooly-red/40 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-muted uppercase">إجمالي المنتجات</span>
+              <div className="w-8 h-8 rounded-control bg-tooly-soft-red text-tooly-red flex items-center justify-center">
+                <Package className="w-4 h-4" />
+              </div>
             </div>
-          </div>
-          <div className="text-3xl font-black text-ink mb-1">{metrics.totalProducts}</div>
-          <div className="text-[11px] text-muted flex items-center gap-1">
-            <span className="text-emerald-700 font-semibold">{metrics.publishedProducts} معروض</span>
-            <span>•</span>
-            <span>{metrics.draftProducts} مسودة</span>
-          </div>
-        </Card>
+            <div className="text-3xl font-black text-ink mb-1">{metrics.totalProducts}</div>
+            <div className="text-[11px] text-muted flex items-center gap-1">
+              <span className="text-emerald-700 font-semibold">{metrics.publishedProducts} معروض</span>
+              <span>•</span>
+              <span>{metrics.draftProducts} مسودة</span>
+            </div>
+          </Card>
+        </Link>
 
         {/* 3. Active Plan Variants */}
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-muted uppercase">خطط الاشتراكات</span>
-            <div className="w-8 h-8 rounded-control bg-emerald-50 text-emerald-700 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4" />
+        <Link href="/admin/products" className="block transition-transform hover:-translate-y-0.5">
+          <Card className="p-5 h-full hover:border-tooly-red/40 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-muted uppercase">خطط الاشتراكات</span>
+              <div className="w-8 h-8 rounded-control bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
             </div>
-          </div>
-          <div className="text-3xl font-black text-ink mb-1">{metrics.totalVariants}</div>
-          <div className="text-[11px] text-muted">
-            مسعرة بالدينار التونسي (TND)
-          </div>
-        </Card>
+            <div className="text-3xl font-black text-ink mb-1">{metrics.totalVariants}</div>
+            <div className="text-[11px] text-emerald-700 font-semibold flex items-center justify-between">
+              <span>إدارة وتعديل الباقات</span>
+              <span className="text-xs">←</span>
+            </div>
+          </Card>
+        </Link>
 
         {/* 4. Categories */}
         <Link href="/admin/categories" className="block transition-transform hover:-translate-y-0.5">

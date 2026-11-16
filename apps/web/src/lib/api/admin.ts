@@ -381,3 +381,71 @@ export async function deleteAdminCatalogOption(id: string) {
   await revalidateStoreProducts();
   return deleted;
 }
+
+export interface AutoTranslatePackPayload {
+  featuresText: string;
+  restrictionsText: string;
+  sourceLocale?: 'ar' | 'fr' | 'en';
+  targetLocales?: Array<'ar' | 'fr' | 'en'>;
+}
+
+export interface AutoTranslateProductPayload {
+  name: string;
+  tagline: string;
+  description: string;
+  sourceLocale?: 'ar' | 'fr' | 'en';
+  targetLocales?: Array<'ar' | 'fr' | 'en'>;
+}
+
+export interface AutoTranslateBatchPayload {
+  product?: AutoTranslateProductPayload;
+  packs?: Array<{
+    index: number;
+    slug?: string;
+    featuresText: string;
+    restrictionsText: string;
+  }>;
+  sourceLocale?: 'ar' | 'fr' | 'en';
+  targetLocales?: Array<'ar' | 'fr' | 'en'>;
+}
+
+export async function autoTranslateAdminPack(payload: AutoTranslatePackPayload) {
+  const res = await fetch('/api/admin/translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      pack: {
+        featuresText: payload.featuresText,
+        restrictionsText: payload.restrictionsText,
+      },
+      sourceLocale: payload.sourceLocale || 'ar',
+      targetLocales: payload.targetLocales || ['fr', 'en'],
+    }),
+  });
+  if (!res.ok) throw new Error('فشل ترجمة الباقة تلقائياً');
+  return res.json();
+}
+
+export async function autoTranslateAdminProduct(payload: AutoTranslateProductPayload) {
+  const res = await fetch('/api/admin/translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      product: payload,
+      sourceLocale: payload.sourceLocale || 'ar',
+      targetLocales: payload.targetLocales || ['fr', 'en'],
+    }),
+  });
+  if (!res.ok) throw new Error('فشل ترجمة بيانات المنتج تلقائياً');
+  return res.json();
+}
+
+export async function autoTranslateAdminBatch(payload: AutoTranslateBatchPayload) {
+  const res = await fetch('/api/admin/translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('فشل الترجمة الشاملة للباقات والمنتج');
+  return res.json();
+}

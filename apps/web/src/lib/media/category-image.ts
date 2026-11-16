@@ -62,14 +62,14 @@ export function resolveCategoryImagePath(
     return getCategoryFallbackImage(slug);
   }
 
-  // Normalize Multer upload paths to the Next.js image path handler
+  // Normalize Multer upload paths to the direct uploads path
   const uploadMatch = raw.match(
-    /^\/(?:api\/(?:v1\/)?)?uploads\/categories\/([a-zA-Z0-9._-]+)$/
+    /(?:https?:\/\/[^\/]+)?\/(?:api\/(?:v1\/)?)?uploads\/categories\/([a-zA-Z0-9._-]+)$/i
   );
   if (uploadMatch) {
     const filename = uploadMatch[1];
     if (SAFE_UPLOAD_FILENAME_REGEX.test(filename)) {
-      return `/api/uploads/categories/${filename}`;
+      return `/uploads/categories/${filename}`;
     }
     return getCategoryFallbackImage(slug);
   }

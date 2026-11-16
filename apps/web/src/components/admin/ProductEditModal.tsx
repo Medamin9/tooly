@@ -5,15 +5,20 @@ import {
   AlertCircle,
   CheckCircle2,
   Image as ImageIcon,
+  Languages,
   Plus,
   RefreshCw,
   SlidersHorizontal,
+  Sparkles,
   Trash2,
   Upload,
 } from 'lucide-react';
 import {
   AdminCatalogOptionKind,
   AdminProductItem,
+  autoTranslateAdminBatch,
+  autoTranslateAdminPack,
+  autoTranslateAdminProduct,
   fetchAdminCatalogOptions,
   updateAdminProduct,
   uploadAdminProductImage,
@@ -198,6 +203,8 @@ export function ProductEditModal({
     useState<AdminCatalogOptionKind | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [translatingScope, setTranslatingScope] = useState<string | null>(null);
+  const [translationSuccessMessage, setTranslationSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -247,6 +254,8 @@ export function ProductEditModal({
       setManagingOptionsKind(null);
       setError(null);
       setUploadError(null);
+      setTranslatingScope(null);
+      setTranslationSuccessMessage(null);
       loadDynamicOptions();
     } else {
       setForm(null);
@@ -335,6 +344,243 @@ export function ProductEditModal({
     });
   };
 
+  const handleTranslatePack = async (idx: number) => {
+    if (!form) return;
+    const variant = form.variants[idx];
+    if (!variant) return;
+
+    const arFeatures = variant.featuresText.ar?.trim() || '';
+    const arRestrictions = variant.restrictionsText.ar?.trim() || '';
+
+    if (!arFeatures && !arRestrictions) {
+      setError('يرجى إدخال ميزات أو قيود الباقة باللغة العربية أولاً لتوليد الترجمة.');
+      return;
+    }
+
+    setTranslatingScope(`pack-${idx}`);
+    setError(null);
+    setTranslationSuccessMessage(null);
+
+    try {
+      const res = await autoTranslateAdminPack({
+        featuresText: arFeatures,
+        restrictionsText: arRestrictions,
+        sourceLocale: 'ar',
+        targetLocales: ['fr', 'en'],
+      });
+
+      if (res?.pack) {
+        updateVariantField(idx, (cur) => ({
+          ...cur,
+          featuresText: {
+            ...cur.featuresText,
+            fr: res.pack.featuresText.fr || cur.featuresText.fr,
+            en: res.pack.featuresText.en || cur.featuresText.en,
+          },
+          restrictionsText: {
+            ...cur.restrictionsText,
+            fr: res.pack.restrictionsText.fr || cur.restrictionsText.fr,
+            en: res.pack.restrictionsText.en || cur.restrictionsText.en,
+          },
+        }));
+        setTranslationSuccessMessage(`تمت ترجمة الباقة #${idx + 1} إلى الفرنسية والإنجليزية بنجاح! ✨`);
+        setTimeout(() => setTranslationSuccessMessage(null), 4000);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'فشل ترجمة الباقة تلقائياً');
+    } finally {
+      setTranslatingScope(null);
+    }
+  };
+
+  const handleTranslateAllPacks = async () => {
+    if (!form || form.variants.length === 0) return;
+
+    setTranslatingScope('all-packs');
+    setError(null);
+    setTranslationSuccessMessage(null);
+
+    try {
+      const packsPayload = form.variants.map((v, i) => ({
+        index: i,
+        slug: v.slug,
+        featuresText: v.featuresText.ar || '',
+        restrictionsText: v.restrictionsText.ar || '',
+      }));
+
+      const res = await autoTranslateAdminBatch({
+        packs: packsPayload,
+        sourceLocale: 'ar',
+        targetLocales: ['fr', 'en'],
+      });
+
+      if (Array.isArray(res?.packs)) {
+        setForm((prev) => {
+          if (!prev) return prev;
+          const updated = [...prev.variants];
+          for (const packRes of res.packs) {
+            const i = packRes.index;
+            if (updated[i]) {
+              updated[i] = {
+                ...updated[i],
+                featuresText: {
+                  ...updated[i].featuresText,
+                  fr: packRes.featuresText.fr || updated[i].featuresText.fr,
+                  en: packRes.featuresText.en || updated[i].featuresText.en,
+                },
+                restrictionsText: {
+                  ...updated[i].restrictionsText,
+                  fr: packRes.restrictionsText.fr || updated[i].restrictionsText.fr,
+                  en: packRes.restrictionsText.en || updated[i].restrictionsText.en,
+                },
+              };
+            }
+          }
+          return { ...prev, variants: updated };
+        });
+        setTranslationSuccessMessage(`تمت ترجمة كافة الباقات (${form.variants.length}) بنجاح! ✨`);
+        setTimeout(() => setTranslationSuccessMessage(null), 4000);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'فشل ترجمة الباقات تلقائياً');
+    } finally {
+      setTranslatingScope(null);
+    }
+  };
+
+  const handleTranslateProductInfo = async () => {
+    if (!form) return;
+    if (!form.name.ar && !form.tagline.ar && !form.description.ar) {
+      setError('يرجى ملء بيانات المنتج باللغة العربية أولاً لتوليد ترجمتها.');
+      return;
+    }
+
+    setTranslatingScope('product');
+    setError(null);
+    setTranslationSuccessMessage(null);
+
+    try {
+      const res = await autoTranslateAdminProduct({
+        name: form.name.ar || '',
+        tagline: form.tagline.ar || '',
+        description: form.description.ar || '',
+        sourceLocale: 'ar',
+        targetLocales: ['fr', 'en'],
+      });
+
+      if (res?.product) {
+        setForm((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            name: {
+              ...prev.name,
+              fr: res.product.name.fr || prev.name.fr,
+              en: res.product.name.en || prev.name.en,
+            },
+            tagline: {
+              ...prev.tagline,
+              fr: res.product.tagline.fr || prev.tagline.fr,
+              en: res.product.tagline.en || prev.tagline.en,
+            },
+            description: {
+              ...prev.description,
+              fr: res.product.description.fr || prev.description.fr,
+              en: res.product.description.en || prev.description.en,
+            },
+          };
+        });
+        setTranslationSuccessMessage('تمت ترجمة بيانات المنتج إلى الفرنسية والإنجليزية بنجاح! ✨');
+        setTimeout(() => setTranslationSuccessMessage(null), 4000);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'فشل ترجمة بيانات المنتج');
+    } finally {
+      setTranslatingScope(null);
+    }
+  };
+
+  const handleTranslateAll = async () => {
+    if (!form) return;
+    setTranslatingScope('all');
+    setError(null);
+    setTranslationSuccessMessage(null);
+
+    try {
+      const packsPayload = form.variants.map((v, i) => ({
+        index: i,
+        slug: v.slug,
+        featuresText: v.featuresText.ar || '',
+        restrictionsText: v.restrictionsText.ar || '',
+      }));
+
+      const res = await autoTranslateAdminBatch({
+        product: {
+          name: form.name.ar || '',
+          tagline: form.tagline.ar || '',
+          description: form.description.ar || '',
+        },
+        packs: packsPayload,
+        sourceLocale: 'ar',
+        targetLocales: ['fr', 'en'],
+      });
+
+      setForm((prev) => {
+        if (!prev) return prev;
+        let updatedForm = { ...prev };
+        if (res?.product) {
+          updatedForm.name = {
+            ...updatedForm.name,
+            fr: res.product.name.fr || updatedForm.name.fr,
+            en: res.product.name.en || updatedForm.name.en,
+          };
+          updatedForm.tagline = {
+            ...updatedForm.tagline,
+            fr: res.product.tagline.fr || updatedForm.tagline.fr,
+            en: res.product.tagline.en || updatedForm.tagline.en,
+          };
+          updatedForm.description = {
+            ...updatedForm.description,
+            fr: res.product.description.fr || updatedForm.description.fr,
+            en: res.product.description.en || updatedForm.description.en,
+          };
+        }
+
+        if (Array.isArray(res?.packs)) {
+          const updatedVariants = [...updatedForm.variants];
+          for (const packRes of res.packs) {
+            const i = packRes.index;
+            if (updatedVariants[i]) {
+              updatedVariants[i] = {
+                ...updatedVariants[i],
+                featuresText: {
+                  ...updatedVariants[i].featuresText,
+                  fr: packRes.featuresText.fr || updatedVariants[i].featuresText.fr,
+                  en: packRes.featuresText.en || updatedVariants[i].featuresText.en,
+                },
+                restrictionsText: {
+                  ...updatedVariants[i].restrictionsText,
+                  fr: packRes.restrictionsText.fr || updatedVariants[i].restrictionsText.fr,
+                  en: packRes.restrictionsText.en || updatedVariants[i].restrictionsText.en,
+                },
+              };
+            }
+          }
+          updatedForm.variants = updatedVariants;
+        }
+
+        return updatedForm;
+      });
+
+      setTranslationSuccessMessage('تمت ترجمة بيانات المنتج وكافة الباقات بنجاح! ✨');
+      setTimeout(() => setTranslationSuccessMessage(null), 4000);
+    } catch (err: any) {
+      setError(err?.message || 'فشل الترجمة التلقائية');
+    } finally {
+      setTranslatingScope(null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form || uploadingLogo) return;
@@ -411,6 +657,50 @@ export function ProductEditModal({
             <span>{error}</span>
           </div>
         )}
+
+        {translationSuccessMessage && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-control flex items-center justify-between gap-2 shadow-sm animate-in fade-in duration-200">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="font-semibold">{translationSuccessMessage}</span>
+            </div>
+            <span className="text-[10px] text-emerald-700 font-bold bg-white px-2 py-0.5 rounded border border-emerald-200">
+              3 لغات جاهزة (AR/FR/EN)
+            </span>
+          </div>
+        )}
+
+        {/* 1-Click Multilingual Auto-Translation Banner */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-gradient-to-r from-tooly-red/5 via-tooly-soft-red/30 to-amber-50 rounded-card border border-tooly-red/25 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-control bg-tooly-red text-white flex items-center justify-center shadow-xs shrink-0">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-ink flex items-center gap-2">
+                <span>المترجم الآلي للباقات والبيانات (Auto-Translate)</span>
+                <span className="text-[10px] font-normal text-tooly-red bg-white px-2 py-0.2 rounded-full border border-tooly-red/20">
+                  بنقرة واحدة ✨
+                </span>
+              </div>
+              <p className="text-[11px] text-muted mt-0.5">
+                توليد الترجمة الفورية بالفرنسية والإنجليزية لكافة الباقات والبيانات من المحتوى العربي.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={handleTranslateAll}
+            isLoading={translatingScope === 'all'}
+            disabled={translatingScope !== null || uploadingLogo}
+            className="text-xs gap-1.5 shadow-sm"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>ترجمة شاملة (عربي ➔ فرنسي + إنجليزي)</span>
+          </Button>
+        </div>
 
         {/* Section 1: Core Info & Icon */}
         <section className="p-4 rounded-card bg-paper/60 border border-line space-y-4">
@@ -655,14 +945,24 @@ export function ProductEditModal({
 
         {/* Section 2: Localized Copy */}
         <section className="p-4 rounded-card bg-paper/60 border border-line space-y-3">
-          <div className="flex items-center justify-between border-b border-line pb-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2">
             <h3 className="text-sm font-bold text-ink">
               2. الاسم والوصف ({activeLocale.toUpperCase()})
             </h3>
-            <span className="text-[11px] text-muted flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              يظهر في البطاقة ورأس صفحة المنتج
-            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleTranslateProductInfo}
+                isLoading={translatingScope === 'product'}
+                disabled={translatingScope !== null}
+                className="gap-1.5 text-xs font-bold text-tooly-red border-tooly-red/30 hover:bg-tooly-soft-red/20"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>ترجمة الاسم والوصف (عربي ➔ فرنسي + إنجليزي)</span>
+              </Button>
+            </div>
           </div>
 
           <div
@@ -738,6 +1038,18 @@ export function ProductEditModal({
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={handleTranslateAllPacks}
+                isLoading={translatingScope === 'all-packs'}
+                disabled={translatingScope !== null}
+                className="gap-1.5 text-xs shadow-xs"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>ترجمة كافة الباقات ({form.variants.length})</span>
+              </Button>
               <Button
                 type="button"
                 variant="secondary"
@@ -910,9 +1222,25 @@ export function ProductEditModal({
 
                   {/* Per-Pack 3-Language Locale Switcher Tabs */}
                   <div className="flex items-center justify-between flex-wrap gap-2 bg-paper px-3 py-2 rounded-control border border-line">
-                    <span className="text-[11px] font-bold text-ink">
-                      لغة ميزات وقيود هذه الباقة:
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-bold text-ink">
+                        لغة ميزات وقيود هذه الباقة:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleTranslatePack(idx)}
+                        disabled={translatingScope !== null}
+                        title="توليد ترجمة ميزات وقيود هذه الباقة من العربية إلى الفرنسية والإنجليزية"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-control text-[11px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition-colors shadow-2xs"
+                      >
+                        {translatingScope === `pack-${idx}` ? (
+                          <RefreshCw className="w-3 h-3 animate-spin text-amber-700" />
+                        ) : (
+                          <Sparkles className="w-3 h-3 text-amber-600" />
+                        )}
+                        <span>ترجمة هذه الباقة تلقائياً</span>
+                      </button>
+                    </div>
                     <div
                       role="tablist"
                       aria-label={`لغة الباقة ${idx + 1}`}
