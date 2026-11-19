@@ -29,8 +29,6 @@ export default function RootLayout({
           as="style"
           href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         />
-        {/* Preload assistant video stream for instant first-frame playback */}
-        <link rel="preload" href="/video.mp4" as="video" type="video/mp4" />
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
@@ -59,6 +57,37 @@ export default function RootLayout({
                     document.documentElement.style.colorScheme = 'light';
                   }
                 } catch (e) {}
+
+                // Global ChunkLoadError Auto-Recovery for seamless updates
+                window.addEventListener('error', function(e) {
+                  try {
+                    var msg = (e && e.message ? e.message : '') + '';
+                    var isChunkErr = msg.indexOf('Loading chunk') !== -1 ||
+                      msg.indexOf('ChunkLoadError') !== -1 ||
+                      (e.target && e.target.tagName === 'SCRIPT' && e.target.src && e.target.src.indexOf('/_next/static/') !== -1);
+                    if (isChunkErr) {
+                      var retryKey = 'tooly_chunk_retry_' + window.location.pathname;
+                      if (!sessionStorage.getItem(retryKey)) {
+                        sessionStorage.setItem(retryKey, '1');
+                        window.location.reload();
+                      }
+                    }
+                  } catch (err) {}
+                }, true);
+
+                window.addEventListener('unhandledrejection', function(e) {
+                  try {
+                    var reason = e && e.reason;
+                    var msg = (reason && (reason.message || reason.name || reason) ? (reason.message || reason.name || reason) : '') + '';
+                    if (msg.indexOf('Loading chunk') !== -1 || msg.indexOf('ChunkLoadError') !== -1 || msg.indexOf('Failed to fetch dynamically imported module') !== -1) {
+                      var retryKey = 'tooly_chunk_retry_' + window.location.pathname;
+                      if (!sessionStorage.getItem(retryKey)) {
+                        sessionStorage.setItem(retryKey, '1');
+                        window.location.reload();
+                      }
+                    }
+                  } catch (err) {}
+                });
               })();
             `,
           }}

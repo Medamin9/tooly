@@ -13,6 +13,21 @@ export default function RootError({
   reset: () => void;
 }) {
   useEffect(() => {
+    const errorMsg = (error?.message || error?.name || '') + '';
+    const isChunkError =
+      error?.name === 'ChunkLoadError' ||
+      errorMsg.includes('Loading chunk') ||
+      errorMsg.includes('ChunkLoadError') ||
+      errorMsg.includes('Failed to fetch dynamically imported module');
+
+    if (isChunkError && typeof window !== 'undefined') {
+      const retryKey = 'tooly_root_chunk_retry_' + window.location.pathname;
+      if (!sessionStorage.getItem(retryKey)) {
+        sessionStorage.setItem(retryKey, '1');
+        window.location.reload();
+        return;
+      }
+    }
     console.error('Root App Router error caught:', error);
   }, [error]);
 

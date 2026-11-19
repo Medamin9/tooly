@@ -368,8 +368,11 @@ module.exports = {
 EOF
 fi
 
+# Ensure full read access for Nginx on Next.js build output
+chmod -R 755 "${APP_DIR}/apps/web/.next" || true
+
 log_info "Starting / Reloading Tooly processes in PM2..."
-pm2 startOrReload "${APP_DIR}/ecosystem.config.js" --update-env
+pm2 restart "${APP_DIR}/ecosystem.config.js" --update-env || pm2 start "${APP_DIR}/ecosystem.config.js"
 pm2 save
 
 # Setup PM2 startup systemd script

@@ -41,8 +41,11 @@ if [[ ! -f "${APP_DIR}/apps/api/dist/main.js" && -f "${APP_DIR}/apps/api/dist/ap
     cp -rn "${APP_DIR}/apps/api/dist/apps/api/src/"* "${APP_DIR}/apps/api/dist/" || true
 fi
 
-echo ">>> 5/5 Reloading PM2 services with zero downtime..."
-pm2 reload ecosystem.config.js --update-env
+# Ensure full read access for Nginx on newly generated Next.js static chunks
+chmod -R 755 "${APP_DIR}/apps/web/.next" || true
+
+echo ">>> 5/5 Restarting PM2 services cleanly..."
+pm2 restart ecosystem.config.js --update-env
 pm2 save
 
 if command -v nginx &>/dev/null; then

@@ -13,6 +13,21 @@ export default function LocaleError({
   reset: () => void;
 }) {
   useEffect(() => {
+    const errorMsg = (error?.message || error?.name || '') + '';
+    const isChunkError =
+      error?.name === 'ChunkLoadError' ||
+      errorMsg.includes('Loading chunk') ||
+      errorMsg.includes('ChunkLoadError') ||
+      errorMsg.includes('Failed to fetch dynamically imported module');
+
+    if (isChunkError && typeof window !== 'undefined') {
+      const retryKey = 'tooly_locale_chunk_retry_' + window.location.pathname;
+      if (!sessionStorage.getItem(retryKey)) {
+        sessionStorage.setItem(retryKey, '1');
+        window.location.reload();
+        return;
+      }
+    }
     // Log error securely on client side for diagnostic purposes
     console.error('App Router segment error caught:', error);
   }, [error]);
