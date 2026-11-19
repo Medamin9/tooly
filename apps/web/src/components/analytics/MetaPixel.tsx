@@ -4,7 +4,7 @@ import React, { useEffect, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 
-export const DEFAULT_META_PIXEL_ID = '6092842960776413';
+export const DEFAULT_META_PIXEL_ID = '1675849973927613';
 
 export const META_PIXEL_ID =
   process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID ||
